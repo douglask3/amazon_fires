@@ -3,7 +3,7 @@ library(gitBasedProjects)
 library(snow)
 
 dir_nr = "data/fireCounts/"
-nlines_per_step = 1000
+nlines_per_step = 10000
 
 file_grid = "data/air.mon.mean.nc"
 
@@ -13,7 +13,6 @@ processFile <- function(file, nlines_per_step, rv, lonlat2.5) {
     print(file)
     
     nlines = as.numeric(strsplit(system(paste('wc -l', file), TRUE), ' data')[[1]][1])
-    nlines = 12546
     cnames = colnames(read.csv(file, nrows = 1, skip = 0))
     
     readLines <- function(i) {
