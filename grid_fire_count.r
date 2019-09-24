@@ -94,7 +94,7 @@ years = sapply(files, function(file) tail(strsplit(file, 'Focos_')[[1]],1))
 years = sapply(years, function(year) strsplit(year, '-')[[1]][1])
 years = as.numeric(years)
 
-cl = makeSOCKcluster(c("localhost", "localhost"))
+cl = makeSOCKcluster(c("localhost", "localhost", "localhost", "localhost"))
     #rv = lapply(files, processFile, nlines_per_step, rv, lonlat2.5)
     rv = parLapply(cl, files, processFile, nlines_per_step, rv, lonlat2.5)
 stopCluster(cl)
