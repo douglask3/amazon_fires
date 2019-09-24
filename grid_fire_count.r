@@ -89,7 +89,7 @@ rv = list(blank = rv)
 lonlat2.5 = xyFromCell(r[[1]], 1:length(r[[1]]))/2.5
 
 files = list.files(dir_nr, full.names = TRUE)
-files = files[grepl('.csv', files)][1:4]
+files = files[grepl('.csv', files)]
 
 years = sapply(files, function(file) tail(strsplit(file, 'Focos_')[[1]],1))
 years = sapply(years, function(year) strsplit(year, '-')[[1]][1])
