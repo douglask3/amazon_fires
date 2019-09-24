@@ -1,6 +1,7 @@
 library("raster")
 library(gitBasedProjects)
 library(snow)
+library(ncdf4)
 
 dir_nr = "data/fireCounts/"
 nlines_per_step = 10000
