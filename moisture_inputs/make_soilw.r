@@ -6,7 +6,7 @@ source("libs/filename.noPath.r")
 source("libs/writeRaster.Standard.r")
 
 files = list.files('data/soilw/', full.names=TRUE)
-
+mask_file = 'data/climate/climate_mask.nc'
 
 makeMonthlySoilW <- function(file) {
     dat = brick(file)
@@ -34,6 +34,8 @@ makeMonthlySoilW <- function(file) {
 files = files
 soilw = layer.apply(files, makeMonthlySoilW)
 
+mask = raster(mask_file)
+soilw = raster::resample(soilw, mask)
 
 seaCy12 <- function(r) {	
     Cy12 <- function(mnth) {
@@ -45,6 +47,8 @@ seaCy12 <- function(r) {
 
 soilw_max = seaCy12(soilw)
 soilw = soilw[[13:nlayers(soilw)]]
+
+
 
 filesN = sapply(files, filename.noPath, noExtension=TRUE)
 yrs = sapply(filesN, function(file) tail(strsplit(file, '.', fixed = TRUE)[[1]],1))
