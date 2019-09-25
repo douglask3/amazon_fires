@@ -50,5 +50,5 @@ yrs = max(yrs)
 
 file_out = paste0('outputs/',c('', 'MaxOverMean_'),filesN[1], '-', yrs, '.nc')
 
-writeRaster.gitInfo(soilw    , file_out[1])
-writeRaster.gitInfo(soilw_max, file_out[2])
+writeRaster.gitInfo(soilw    , file_out[1], overwrite = TRUE)
+writeRaster.gitInfo(soilw_max, file_out[2], overwrite = TRUE)
