@@ -3,8 +3,10 @@ library(rasterExtras)
 library(gitBasedProjects)
 library(ncdf4)
 source("libs/filename.noPath.r")
+source("libs/writeRaster.Standard.r")
 
 files = list.files('data/soilw/', full.names=TRUE)
+
 
 makeMonthlySoilW <- function(file) {
     dat = brick(file)
@@ -50,5 +52,5 @@ yrs = max(yrs)
 
 file_out = paste0('outputs/',c('', 'MaxOverMean_'),filesN[1], '-', yrs, '.nc')
 
-writeRaster.gitInfo(soilw    , file_out[1], overwrite = TRUE)
-writeRaster.gitInfo(soilw_max, file_out[2], overwrite = TRUE)
+writeRaster.Standard(soilw    , file_out[1])
+writeRaster.Standard(soilw_max, file_out[2])
