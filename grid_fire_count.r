@@ -2,12 +2,13 @@ library("raster")
 library(gitBasedProjects)
 library(snow)
 library(ncdf4)
-
+source("libs/writeRaster.Standard.r")
 
 dir_nr = "data/fireCounts/"
 nlines_per_step = 10000
 
 file_grid = "data/air.mon.mean.nc"
+mask_grid = "data/climate/climate_mask.nc"
 
 extent = extent(c(360-85, 360-30, -33, 15))
 
@@ -99,16 +100,16 @@ rv = list(blank = rv)
 lonlat2.5 = xyFromCell(r[[1]], 1:length(r[[1]]))/2.5
 
 files = list.files(dir_nr, full.names = TRUE)
-files = files[grepl('.csv', files)]
+files = files[grepl('.csv', files)][1:3]
 
 years = sapply(files, function(file) tail(strsplit(file, 'Focos_')[[1]],1))
 years = sapply(years, function(year) strsplit(year, '-')[[1]][1])
 years = as.numeric(years)
 
-cl = makeSOCKcluster(c("localhost", "localhost", "localhost", "localhost"))
-    #rv = lapply(files, processFile, nlines_per_step, rv, lonlat2.5)
-    rv = parLapply(cl, files, processFile, nlines_per_step, rv, lonlat2.5)
-stopCluster(cl)
+#cl = makeSOCKcluster(c("localhost", "localhost", "localhost", "localhost"))
+    rv = lapply(files, processFile, nlines_per_step, rv, lonlat2.5)
+    #rv = parLapply(cl, files, processFile, nlines_per_step, rv, lonlat2.5)
+#stopCluster(cl)
 
 sats = unique(unlist(lapply(rv, names)))[-1]
 rr = rep(c(r), length(sats))
@@ -126,7 +127,10 @@ addYear2rr <- function(ri, yr) {
 } 
 mapply(addYear2rr, rv, years)
 
+mask = raster(mask_file)
+rr_rs = lapply(rr, raster::resample, mask)
+browser()
 fnames = paste0('outputs/fireCount-', sats, '.nc')
-mapply(writeRaster.gitInfo, rr, filename = fnames, overwrite = TRUE)
+mapply(writeRaster.Standard, rr_rs, fnames)
 #writeRaster(r, file = "MODIS_fire_count.nc",overwrite=TRUE)
 
