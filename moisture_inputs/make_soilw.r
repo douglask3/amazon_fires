@@ -1,6 +1,7 @@
 library(raster)
 library(rasterExtras)
 library(gitBasedProjects)
+library(ncdf4)
 source("libs/filename.noPath.r")
 
 files = list.files('data/soilw/', full.names=TRUE)
