@@ -1,5 +1,4 @@
 library("raster")
-library(gitBasedProjects)
 library(snow)
 library(ncdf4)
 source("libs/writeRaster.Standard.r")
