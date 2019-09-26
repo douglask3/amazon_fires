@@ -8,7 +8,7 @@ dir_nr = "data/fireCounts/"
 nlines_per_step = 10000
 
 file_grid = "data/air.mon.mean.nc"
-mask_grid = "data/climate/climate_mask.nc"
+mask_file = "data/climate/climate_mask.nc"
 
 extent = extent(c(360-85, 360-30, -33, 15))
 
@@ -112,16 +112,21 @@ cl = makeSOCKcluster(c("localhost", "localhost", "localhost", "localhost"))
 stopCluster(cl)
 
 sats = unique(unlist(lapply(rv, names)))[-1]
+r[] = NaN
 rr = rep(c(r), length(sats))
 names(rr) = sats
 
 addYear2rr <- function(ri, yr) {
+    print(yr)
     mnths = ((yr - 2001)*12+1):((yr-2001 + 1)*12)
     
     for (i in 2:length(ri)) {
         index = which(sats == names(ri)[i])
         for (mn in 1:12) 
-           rr[[index]][[mnths[mn]]][] = ri[[i]][,mn]
+            if (mnths[mn] <= nlayers(rr[[index]]))
+                if (sum(ri[[i]][,mn]) > 0)
+                    rr[[index]][[mnths[mn]]][] = ri[[i]][,mn]
+        
     }
     rr <<- rr
 } 
