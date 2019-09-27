@@ -21,7 +21,7 @@ regrid <- function(dir, nm) {
     
     interpolate <- function(d1, d2) {
         interpolateMonth <- function(mn)
-            (d1 * (12-mn) + d1 * mn)/12
+            (d1 * (12-mn) + d2 * mn)/12
         
         dat = layer.apply(1:12, interpolateMonth)
     }
