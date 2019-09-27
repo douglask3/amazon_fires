@@ -54,7 +54,7 @@ filesN = sapply(files, filename.noPath, noExtension=TRUE)
 yrs = sapply(filesN, function(file) tail(strsplit(file, '.', fixed = TRUE)[[1]],1))
 yrs = max(yrs)
 
-file_out = paste0('outputs/',c('', 'MaxOverMean_'),filesN[1], '-', yrs, '.nc')
+file_out = paste0('outputs/',c('climate/', 'vegetation/MaxOverMean_'),filesN[1], '-', yrs, '.nc')
 
 writeRaster.Standard(soilw    , file_out[1])
 writeRaster.Standard(soilw_max, file_out[2])

@@ -7,7 +7,7 @@ mask_file = 'data/climate/climate_mask.nc'
 dirs = c(treecover = 'data/treecover/',
          nonetreecover = 'data/nontree/')
 
-output_dir = 'outputs/'
+output_dir = 'outputs/vegetation/'
 
 mask = raster(mask_file)
 regrid <- function(dir, nm) {

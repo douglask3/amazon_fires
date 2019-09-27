@@ -134,7 +134,7 @@ mapply(addYear2rr, rv, years)
 mask = raster(mask_file)
 rr_rs = lapply(rr, raster::resample, mask)
 
-fnames = paste0('outputs/fireCount-', sats, '.nc')
+fnames = paste0('outputs/fire_counts/fireCount-', sats, '.nc')
 mapply(writeRaster.Standard, rr_rs, fnames)
 #writeRaster(r, file = "MODIS_fire_count.nc",overwrite=TRUE)
 
