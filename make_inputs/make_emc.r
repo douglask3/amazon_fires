@@ -3,7 +3,7 @@
 ################################################################################
 ## Libraries etc
 library(raster)
-source("moisture_inputs/fuel_moisture_equilibrium.r")
+source("make_inputs/fuel_moisture_equilibrium.r")
 source("libs/writeRaster.Standard.r")
 
 ## paths and parameters
