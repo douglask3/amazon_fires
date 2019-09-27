@@ -2,6 +2,7 @@ library(raster)
 library(rasterExtras)
 source("libs/writeRaster.Standard.r")
 source("libs/convert_pacific_centric_2_regular.r")
+source("libs/interpoloateAnnual2Monthly.r")
 
 mask_file = 'data/climate/climate_mask.nc'
 
@@ -11,6 +12,7 @@ dirs = c(treecover = 'data/treecover/',
 output_dir = 'outputs/vegetation/'
 
 mask = raster(mask_file)
+
 regrid <- function(dir, nm) {
     files = list.files(dir, full.names = TRUE) 
     openMaskFile <- function(file) {
@@ -18,15 +20,8 @@ regrid <- function(dir, nm) {
         dat = convert_regular_2_pacific_centric(dat)
         dat = raster::resample(dat, mask)
     }
-    dat = lapply(files, openMaskFile)
     
-    interpolate <- function(d1, d2) {
-        interpolateMonth <- function(mn)
-            (d1 * (12-mn) + d2 * mn)/12
-        
-        dat = layer.apply(1:12, interpolateMonth)
-    }
-    dat = mapply(interpolate, head(dat, -1), dat[-1])
+    dat =interpolateAnnual2Monthly(dat)
     dat = layer.apply(dat, function(i) i)
     dat = dat[[-(1:6)]]
     
