@@ -1,6 +1,7 @@
 library(raster)
 library(rasterExtras)
 source("libs/writeRaster.Standard.r")
+source("libs/convert_pacific_centric_2_regular.r")
 
 mask_file = 'data/climate/climate_mask.nc'
 
