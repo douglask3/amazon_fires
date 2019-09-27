@@ -3,14 +3,14 @@
 ################################################################################
 ## Libraries etc
 library(raster)
-source("moisture_inputs/fuel_moisture_equilibrium.r")
+source("make_inputs/fuel_moisture_equilibrium.r")
 source("libs/writeRaster.Standard.r")
 
 ## paths and parameters
 files = paste0('data/', c('precip.mon.mean.nc', 'rhum.mon.mean.nc', 'air.mon.mean.nc'))
 mask_file = 'data/climate/climate_mask.nc'
 
-fname_out = 'outputs/emc_'
+fname_out = 'outputs/climate/emc_'
 
 ################################################################################
 ## load data                                                                  ##

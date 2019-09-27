@@ -1,0 +1,1 @@
+dir for regridded fire counts data
