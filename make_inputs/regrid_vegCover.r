@@ -23,7 +23,7 @@ regrid <- function(dir, nm) {
     
     dat =interpolateAnnual2Monthly(dat)
     dat = layer.apply(dat, function(i) i)
-    dat = dat[[-(1:6)]]
+    dat = dat[[-(1:6)]]/100
     
     yrs = sapply(files, function(file) tail(strsplit(file, '.', fixed = TRUE)[[1]], 2)[1])
     fname = paste0(output_dir, nm, '-', min(as.numeric(yrs))+1, '-', 'June', max(yrs), '.nc')
