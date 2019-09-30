@@ -3,6 +3,7 @@
 ################################################################################
 ## Libraries etc
 library(raster)
+library(rasterExtras)
 source("make_inputs/fuel_moisture_equilibrium.r")
 source("libs/writeRaster.Standard.r")
 
