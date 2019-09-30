@@ -135,7 +135,7 @@ mask = raster(mask_file)
 rr_rs = lapply(rr, raster::resample, mask)
 
 sats = gsub('-', '__', sats)
-fnames = paste0('outputs/fire_counts/fireCount_', sats, '.nc')
+fnames = paste0('outputs/fire_counts/firecount_', sats, '.nc')
 mapply(writeRaster.Standard, rr_rs, fnames)
 #writeRaster(r, file = "MODIS_fire_count.nc",overwrite=TRUE)
 
