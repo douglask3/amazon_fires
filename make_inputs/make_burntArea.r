@@ -11,7 +11,7 @@ dir = 'data/GFED4s/'
 
 mask_file = 'data/climate/climate_mask.nc'
 
-out_file = 'outputs/GFED4s_2.5degree_2000-2016.nc'
+out_file = 'outputs/burnt_area-GFED4s_2.5degree_2000-2016.nc'
 
 files = list.files(dir, full.names = TRUE)
 files = files[grepl('GFED4.1s_', files)]

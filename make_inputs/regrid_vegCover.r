@@ -34,5 +34,5 @@ regrid <- function(dir, nm) {
 files = mapply(regrid, dirs, names(dirs))
 
 dat = brick(files[1]) + brick(files[2])
-fname = paste0(output_dir, 'vegCover-', paste0(tail(strsplit(files[1], '-')[[1]], 2), collapse = '-'))
+fname = paste0(output_dir, 'vegcover-', paste0(tail(strsplit(files[1], '-')[[1]], 2), collapse = '-'))
 writeRaster.Standard(dat, fname)

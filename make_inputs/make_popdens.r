@@ -19,4 +19,4 @@ files = list.files(dir, full.names = TRUE)
 dat = lapply(files, open_and_regrid_file)
 dat = interpolateAnnual2Monthly(dat)
 dat = dat[[-(1:6)]]
-writeRaster.Standard(dat, 'outputs/human/PD_HYDEv3.2_2001-2018.nc')
+writeRaster.Standard(dat, 'outputs/human/population_density-PD_HYDEv3.2_2001-2018.nc')

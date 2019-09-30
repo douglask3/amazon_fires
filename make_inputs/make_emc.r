@@ -10,7 +10,7 @@ source("libs/writeRaster.Standard.r")
 files = paste0('data/', c('precip.mon.mean.nc', 'rhum.mon.mean.nc', 'air.mon.mean.nc'))
 mask_file = 'data/climate/climate_mask.nc'
 
-fname_out = 'outputs/climate/emc_'
+fname_out = 'outputs/climate/emc-'
 
 ################################################################################
 ## load data                                                                  ##
