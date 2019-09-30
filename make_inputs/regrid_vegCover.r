@@ -20,8 +20,8 @@ regrid <- function(dir, nm) {
         dat = convert_regular_2_pacific_centric(dat)
         dat = raster::resample(dat, mask)
     }
-    
-    dat =interpolateAnnual2Monthly(dat)
+    dat = lapply(files, openMaskFile)
+    dat = interpolateAnnual2Monthly(dat)
     dat = layer.apply(dat, function(i) i)
     dat = dat[[-(1:6)]]/100
     
