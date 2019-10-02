@@ -8,6 +8,8 @@ source("libs/writeRaster.Standard.r")
 files = list.files('data/soilw/', full.names=TRUE)
 mask_file = 'data/climate/climate_mask.nc'
 
+soil_property_file = 'data/qrparm.soil.nc'
+
 makeMonthlySoilW <- function(file) {
     dat = brick(file)
     month = as.numeric(sapply(names(dat), function(i) strsplit(i, '.', fixed = TRUE)[[1]][2]))
@@ -31,11 +33,21 @@ makeMonthlySoilW <- function(file) {
     }
     layer.apply(1:12, meanMonth)
 }
+
 files = files
 soilw = layer.apply(files, makeMonthlySoilW)
 
 mask = raster(mask_file)
 soilw = raster::resample(soilw, mask)
+
+soil_porosity = raster(soil_property_file, varname = "soil_porosity")
+soil_porosity[soil_porosity > 9E9] = NaN
+soil_porosity = raster::resample(soil_porosity, mask)
+
+soilw = soilw/soil_porosity
+soilw[soilw>1] = 1
+min_soilw = min.raster(soilw, na.rm = TRUE)
+soilw = (soilw - min_soilw)/(1 - min_soilw)
 
 seaCy12 <- function(r) {	
     Cy12 <- function(mnth) {
@@ -48,13 +60,12 @@ seaCy12 <- function(r) {
 soilw_max = seaCy12(soilw)
 soilw = soilw[[13:nlayers(soilw)]]
 
-
-
 filesN = sapply(files, filename.noPath, noExtension=TRUE)
 yrs = sapply(filesN, function(file) tail(strsplit(file, '.', fixed = TRUE)[[1]],1))
 yrs = max(yrs)
 
-file_out = paste0('outputs/',c('climate/', 'vegetation/MaxOverMean_'),filesN[1], '-', yrs, '.nc')
+file_out = paste0('outputs/',c('climate/', 'vegetation/MaxOverMean_'),
+                  filesN[1], '-', yrs, '.nc')
 
 writeRaster.Standard(soilw    , file_out[1])
 writeRaster.Standard(soilw_max, file_out[2])
