@@ -6,6 +6,7 @@ extent = extent(c(-85, -30, -30, 13))
 
 dirs = list.dirs('outputs/')
 dirs = dirs[!grepl('_region', dirs)]
+dirs = dirs[!grepl('sampled_posterior_ConFire_solutions', dirs)]
 
 regridFiles <- function(dir) {
     files_in  = list.files(dir, full.names = TRUE)
