@@ -8,6 +8,9 @@ dirs = list.dirs('outputs/')
 dirs = dirs[!grepl('_region', dirs)]
 dirs = dirs[!grepl('sampled_posterior_ConFire_solutions', dirs)]
 
+mask = 'data/climate/climate_mask.nc'
+
+
 regridFiles <- function(dir) {
     files_in  = list.files(dir, full.names = TRUE)
     files_in  = files_in[grepl('.nc', files_in)]
@@ -20,6 +23,10 @@ regridFiles <- function(dir) {
         print(file_out)
         
         r = r0 = brick(file_in)
+        if (extent(r)[2] == 144.5) {
+            extent(r) = extent(c(-1.25, 358.75, -90, 90))
+            r = raster::resample(r, mask_eg)
+        }
         r = convert_pacific_centric_2_regular(r)
         r = raster::crop(r, extent)
         
@@ -32,6 +39,7 @@ regridFiles <- function(dir) {
     return(files_out)
 }
 
+mask_eg = raster(mask)
 mask = NULL
 files_out = unlist(sapply(dirs, regridFiles))
 
