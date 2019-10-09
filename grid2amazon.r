@@ -30,7 +30,8 @@ regridFiles <- function(dir) {
         r = convert_pacific_centric_2_regular(r)
         r = raster::crop(r, extent)
         
-        rmask = all(is.na(r)) | any(r > 9E9)
+        rmask = all(is.na(r)) | any(r > 9E9) 
+        if (grepl("lightning", file_in)) rmask = rmask | any(r < 0)
         if (is.null(mask)) mask <<- rmask
         else mask <<- mask | rmask
         writeRaster.Standard(r, file_out)
