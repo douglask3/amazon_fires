@@ -44,8 +44,14 @@ soil_porosity = raster(soil_property_file, varname = "soil_porosity")
 soil_porosity[soil_porosity > 9E9] = NaN
 soil_porosity = raster::resample(soil_porosity, mask)
 
-soilw = soilw/soil_porosity
+soil_wilting_point = raster(soil_property_file, varname = "volume_fraction_of_condensed_water_in_soil_at_wilting_point")
+soil_wilting_point[soil_wilting_point > 9E9] = NaN
+soil_wilting_point = raster::resample(soil_wilting_point, mask)
+
+
+soilw = (soilw - soil_wilting_point)/(soil_porosity - soil_wilting_point)
 soilw[soilw>1] = 1
+soilw[soilw<0] = 0
 min_soilw = min.raster(soilw, na.rm = TRUE)
 soilw = (soilw - min_soilw)/(1 - min_soilw)
 
