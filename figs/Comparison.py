@@ -1,14 +1,5 @@
-#Step 1) Make GFED and TERRA the same size
-'''
-TERRA = months since 2001 (to 2019)
-GFED = months since 2000 (to 2016)
 
-ncks -d time,0,179 -o TERRA_MT_2001-2016_CB.nc firecount_TERRA_M__T.nc
-ncks -d time,12,191 -o GFED_2001-2016_CB.nc burnt_area-GFED4s_2.5degree_2000-2016.nc
-'''
-
-
-# Step 2) Make plots
+# Make plots
 ### South America total ###
 
 import matplotlib as mpl
@@ -49,7 +40,7 @@ print cube.data
 
 fig, ax = plt.subplots()
 
-x = np.arange(180)
+x = np.arange(192)
 ax.plot(x,GFED.data, color='black', label='GFED burned area (km$^2$)')
 ax.plot(x,cube.data, color='blue', label='MODIS TERRA M-T \n(10000 fire counts)')
 #Alternative: scatter plot
@@ -115,7 +106,7 @@ cube = cube.collapsed(coords, iris.analysis.SUM, weights = grid_weights)/1000000
 
 fig, ax = plt.subplots()
 
-x = np.arange(180)
+x = np.arange(192)
 ax.plot(x,GFED.data, color='black', label='GFED burned area (km$^2$)')
 ax.plot(x,cube.data, color='blue', label='MODIS TERRA M-T \n(10000 fire counts)')
 #Alternative: scatter plot
