@@ -1,5 +1,6 @@
 library(raster)
 library(greenbrown)
+source("libs/plotStandardMap.r")
 
 files = paste0("outputs/amazon_region/",
                c("vegetation/treecover-2001-June2018.nc",
@@ -26,18 +27,6 @@ limitss       = list(c(0   , 1, 10, 20, 40, 60, 80),
                      c(0, 0.1, 1, 2, 5, 10, 20, 50))
                      
 scales = c(1/0.8, 1, 1, 1)
-
-plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE, ...) {
-    plot_raster_from_raster(r, e = e,
-                            cols = cols, limits = limits, add_legend = FALSE,
-                            quick = TRUE, ePatternRes = 5, ePatternThick = 0.67,
-                            limits_error = c(0.05, 0.1), ...)
-    if (add_legend) {
-        add_raster_legend2(cols, limits, dat = trend[[2]],
-                           transpose = FALSE, srt = 0, oneSideLabels= FALSE,
-                           plot_loc = c(0.35, 0.99, 0.09, 0.12),  ylabposScling=0.8, ...)
-    }
-}
 
 logistic <- function(r) 1/(1+exp(-r))
 
