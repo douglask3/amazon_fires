@@ -11,7 +11,8 @@ plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE, ...) 
         e = sd.raster(r)
         r = mean(r)
     }
-    
+    r[r>9E9] = NaN
+    if (!is.null(e)) e[is.na(r)] = NaN
     plot_raster_from_raster(r, e = e,
                             cols = cols, limits = limits, add_legend = FALSE,
                             quick = TRUE, ePatternRes = 5, ePatternThick = 0.67,
