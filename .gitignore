@@ -1,3 +1,9 @@
+
+*.pyc
+
+libs/__pycache__/*
+
+
 temp/*
 outputs/*
 data/*
