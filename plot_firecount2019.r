@@ -76,7 +76,7 @@ sim_maps = list(sim_mean, sim_last, sim_qrs)
 cols = list(cols_fc, cols_fc,  cols_qs)
 limits = list(limits_fc, limits_fc, limits_qs-0.5)
 graphics.off()
-pdf("figs/fireSeasonComaprison.pdf", height = 7, width = 5)#, res = 300, units = 'in')
+png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = 'in')
     layout(rbind(c(1, 2, 2, 3), c(4, 5, 5, 6), c(7, 7, 8, 8), c(9, 10, 10, 11), 12),
            heights = c(1, 1, 0.3, 1, 0.3), widths = c(1, 0.9, 0.1, 1))
     mar = c(0, 0, 0, 0)
@@ -97,10 +97,11 @@ pdf("figs/fireSeasonComaprison.pdf", height = 7, width = 5)#, res = 300, units =
                    adj = 0,extend_max = FALSE)
     mtext('No. years', side = 1, line = -2.5, adj = 0.75)
     par(mar = mar)
+    grab_cache = FALSE
     sims_e = lapply(files_sim, summeryFile, varname = "burnt_area", addError = TRUE, tnameExt = 'plusError')
     #simrs_e =  lapply(1:nlayers(obs), select_item, sims_e)
     
-    ppoint = layer.apply(1:nlayers(obs), function(i) 100.2*mean(obs[[i]] > simrs_e[[i]])-50.1)
+    ppoint = layer.apply(1:nlayers(obs), function(i) 100*mean(obs[[i]] > simrs_e[[i]])-50)
     ppoint_maps = list(mean(ppoint), ppoint[[nlayers(ppoint)]], ppoint[[nlayers(ppoint)-1]])
     
     mapply(plotStandardMap, ppoint_maps,
@@ -109,6 +110,10 @@ pdf("figs/fireSeasonComaprison.pdf", height = 7, width = 5)#, res = 300, units =
             MoreArgs = list(limits_error = c(0.25, 0.5), cols = cols_pc, limits = limits_pc-50))
 
     par(mar = c(3, 0, 0, 0)) 
-    StandardLegend(cols_pc, limits_pc-50, ppoint_maps[[3]],#, labelss = c(0, limits_pc, 100)
+    limits_pci = limits_pc
+    limits_pci[1] = limits_pci[1] + 0.0001; limits_pci[length(limits_pci)] = limits_pci[length(limits_pci)] - 0.0001
+    StandardLegend(cols_pc, limits_pc-50, ppoint_maps[[3]], labelss = limits_pc,#c(0, limits_pc, 100)
                    rightx = 0.9, extend_max = TRUE, extend_min = TRUE, units = '%')
 dev.off()
+
+writeRaster(ppoint_maps[[2]], 'outputs/quantilePosition_2019_firecount.nc', overwrite = TRUE)
