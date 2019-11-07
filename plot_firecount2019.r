@@ -42,7 +42,7 @@ summeryFile <- function(file, meanMonths = TRUE, ...) {
         return(maps)
     }
     
-    dat = brick(file, ...)>>>>>>> CEH_changes_temp
+    dat = brick(file, ...)
     fireSeasonYr_mean <- function(mnths) mean(dat[[mnths]])
     fireSeasonYr      <- function(mnths)     (dat[[mnths]])
     
