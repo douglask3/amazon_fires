@@ -42,7 +42,7 @@ summeryFile <- function(file, meanMonths = TRUE, ...) {
         return(maps)
     }
     
-    dat = brick(file, ...)
+    dat = brick(file, ...)>>>>>>> CEH_changes_temp
     fireSeasonYr_mean <- function(mnths) mean(dat[[mnths]])
     fireSeasonYr      <- function(mnths)     (dat[[mnths]])
     
@@ -131,7 +131,7 @@ png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = '
         return(out)
     }
     tfile = 'temp/fire_summary_precentile.nc'
-    if (file.exists(tfile) & FALSE) {
+    if (file.exists(tfile) & grab_cache) {
         load(tfile)
     } else {
         sim_qrs = lapply(monthsByYr, open_simqs)
@@ -141,7 +141,7 @@ png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = '
     counts = floor(as.numeric(sapply(names(sim_qrs[[1]][[1]]),
                    function(i) strsplit(i, "X")[[1]][2])))
     diffC = diff(counts[1:2])
-    YearBeat <- function(yr, obs, sim, sumDir = 'Y') {
+    YearBeat <- function(yr, obs, sim, sumDir = 'X') {
         obs = diffC*round(obs/diffC)
         tObs <- function(i) {
             ob = obs[[i]]
@@ -162,7 +162,7 @@ png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = '
 
         transalteUnits <- function(i) (mean(i) * 100) -50
         tfile = paste('temp/BeatYear', yr, sumDir, '.nc', sep = '-')
-        if (file.exists(tfile) && FALSE) return(transalteUnits(brick(tfile)))
+        if (file.exists(tfile) && grab_cache) return(transalteUnits(brick(tfile)))
         print(tfile)
         out = layer.apply(1:nlayers(obs), tObs )
         out = writeRaster(out, tfile, overwrite = TRUE)
@@ -171,7 +171,7 @@ png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = '
     ppoint = mapply(YearBeat, 1:length(obs_slt), obs_slt, sim_qrs)
     
     ppoint = layer.apply(ppoint, function(i) i)
-    
+     
     ppoint_maps = list(mean(ppoint), ppoint[[nlayers(ppoint)]], ppoint[[nlayers(ppoint)-1]])
     
     mapply(plotStandardMap, ppoint_maps,
