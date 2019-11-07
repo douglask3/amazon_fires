@@ -186,4 +186,4 @@ png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = '
                    rightx = 0.9, units = '%')
 dev.off()
 
-writeRaster(ppoint_maps[[2]], 'outputs/quantilePosition_2019_firecount.nc', overwrite = TRUE)
+writeRaster.gitInfo(ppoint_maps[[2]], 'outputs/quantilePosition_2019_firecount.nc', overwrite = TRUE)
