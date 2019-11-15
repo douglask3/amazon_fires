@@ -1,8 +1,11 @@
 library(raster)
 library(rasterExtras)
+library(gitBasedProjects)
+library(ncdf4)
 source("libs/plotStandardMap.r")
 source("libs/sd.raster.r")
 source("libs/filename.noPath.r")
+graphics.off()
 
 file_obs = 'outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc'
 dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-firecount/constant_post_2018_2/'
@@ -24,7 +27,7 @@ cols_pc = rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090',
                 '#ddffdd','#e0f3f8','#abd9e9','#74add1','#4575b4','#313695'))
 limits_pc = c(1, 5, 10, 20, 40, 60, 80, 90, 95, 99)
 
-grab_cache = TRUE
+grab_cache = FALSE
 
 dat = brick(file_obs)
 months = lapply(fireMonths, seq, nlayers(dat), by = 12)
@@ -93,9 +96,17 @@ if (file.exists(tfile) && grab_cache) {
 cols = list(cols_fc, cols_fc,  cols_qs)
 limits = list(limits_fc, limits_fc, limits_qs-0.5)
 graphics.off()
-png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = 'in')
-    layout(rbind(c(1, 2, 2, 3), c(4, 5, 5, 6), c(7, 7, 8, 8), c(9, 10, 10, 11), 12),
-           heights = c(1, 1, 0.3, 1, 0.3), widths = c(1, 0.9, 0.1, 1))
+png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png"),
+    height = 9.8, width = 5, res = 300, units = 'in')
+
+    layout(rbind(c(1, 2, 2, 3),
+                 c(4, 5, 5, 6),
+                 c(7, 7, 8, 8),
+                 c(9, 10, 10, 11),
+                 12,
+                 c(13, 14, 14, 15),
+                 16),
+           heights = c(1, 1, 0.3, 1, 0.3, 1, 0.3), widths = c(1, 0.9, 0.1, 1))
     mar = c(0, 0, 0, 0)
     par(mar = mar, oma = c(0, 1.2, 1.2, 0))
     mapply(plotStandardMap, obs_maps, cols = cols, limits = limits,
@@ -122,7 +133,6 @@ png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = '
             out = brick(paste0(dir_sim, "/fire_summary_frequancy_of_counts.nc"), level = yr)
             nms = names(out)
             out[[1]][out[[1]] > 9E9] = NaN
-            out = out
             out = out / sum(out)
             names(out) = nms
             return(out)
@@ -141,6 +151,7 @@ png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = '
     counts = floor(as.numeric(sapply(names(sim_qrs[[1]][[1]]),
                    function(i) strsplit(i, "X")[[1]][2])))
     diffC = diff(counts[1:2])
+
     YearBeat <- function(yr, obs, sim, sumDir = 'X') {
         obs = diffC*round(obs/diffC)
         tObs <- function(i) {
@@ -150,6 +161,7 @@ png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = '
             vtest <- function(ov, sv) {
                 if (is.na(ov)) return(NaN)
                 index = which(counts == ov)+1 
+                
                 if (sumDir == 'X') return(sum(sv[1:index]))    
                 sum(sv[sv>sv[index]])        
             }
@@ -162,28 +174,44 @@ png("figs/fireSeasonComaprison.png", height = 7, width = 5, res = 300, units = '
 
         transalteUnits <- function(i) (mean(i) * 100) -50
         tfile = paste('temp/BeatYear', yr, sumDir, '.nc', sep = '-')
-        if (file.exists(tfile) && grab_cache) return(transalteUnits(brick(tfile)))
+        if (file.exists(tfile) && FALSE) return(transalteUnits(brick(tfile)))
         print(tfile)
         out = layer.apply(1:nlayers(obs), tObs )
         out = writeRaster(out, tfile, overwrite = TRUE)
         return(transalteUnits(out))
     }
-    ppoint = mapply(YearBeat, 1:length(obs_slt), obs_slt, sim_qrs)
-    
-    ppoint = layer.apply(ppoint, function(i) i)
+
+    plot_ppoints <- function(sumDir = 'X', limits, labelss, cols) {
+        ppoint = mapply(YearBeat, 1:length(obs_slt), obs_slt, sim_qrs, sumDir = sumDir)
+        ppoint = layer.apply(ppoint, function(i) i)
      
-    ppoint_maps = list(mean(ppoint), ppoint[[nlayers(ppoint)]], ppoint[[nlayers(ppoint)-1]])
+        ppoint_maps = list(mean(ppoint), ppoint[[nlayers(ppoint)]], ppoint[[nlayers(ppoint)-1]])
     
-    mapply(plotStandardMap, ppoint_maps,
-           title2 = c("Probability of\nfire season", "", ""),
-           title3 = c("Average 2001-2019", "2019", "2018"),
-            MoreArgs = list(limits_error = c(0.25, 0.5), cols = cols_pc, limits = limits_pc-50))
+        if (sumDir == 'X') {
+            title2 = c("Quantile of\nfire season", "", "")
+            title3 = c("Average 2001-2019", "2019", "2018")
+        } else {
+            title2 = c("Probability of\nfire season", "", "")
+            title3 = c("", "", "")
+        }
+        mapply(plotStandardMap, ppoint_maps,
+               title2 = title2,
+               title3 = title3,
+                MoreArgs = list(limits_error = c(0.25, 0.5),
+                                cols = cols, limits = limits))
 
-    par(mar = c(3, 0, 0, 0)) 
-
-    StandardLegend(cols_pc, limits_pc-50, ppoint_maps[[3]], extend_max = FALSE,
-                   labelss = c(-50, limits_pc-50, 50),
-                   rightx = 0.9, units = '%')
+        
+        par(mar = c(3, 0, 0, 0)) 
+        StandardLegend(cols, limits, ppoint_maps[[3]], extend_max = FALSE,
+                       labelss = labelss,
+                       rightx = 0.9, units = '%')
+        par(mar = mar) 
+    }
+    plot_ppoints('X', limits_pc-50, c(-50, limits_pc-50, 50), cols_pc)
+    limits_pr = c(20, 40, 60, 80, 90, 95, 99)
+    cols_pr = c('#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1','#dd3497','#ae017e','#7a0177','#49006a')
+    plot_ppoints('Y', limits_pr - 50, c(0, limits_pr, 100), cols_pr)
+    
 dev.off()
 
 writeRaster.gitInfo(ppoint_maps[[2]], 'outputs/quantilePosition_2019_firecount.nc', overwrite = TRUE)
