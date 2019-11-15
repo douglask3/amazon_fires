@@ -34,7 +34,6 @@ makeMonthlySoilW <- function(file) {
     layer.apply(1:12, meanMonth)
 }
 
-files = files
 soilw = layer.apply(files, makeMonthlySoilW)
 
 mask = raster(mask_file)
@@ -71,7 +70,7 @@ yrs = sapply(filesN, function(file) tail(strsplit(file, '.', fixed = TRUE)[[1]],
 yrs = max(yrs)
 
 file_out = paste0('outputs/',c('climate/', 'vegetation/MaxOverMean_'),
-                  filesN[1], '-', yrs, '.nc')
+                  filesN[2], '-', yrs, '.nc')
 
 writeRaster.Standard(soilw    , file_out[1])
 writeRaster.Standard(soilw_max, file_out[2])
