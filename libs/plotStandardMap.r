@@ -13,7 +13,7 @@ StandardLegend <- function(cols, limits, dat, rightx = 0.95, extend_max = TRUE, 
                            ylabposScling = 1, extend_max = extend_max, ...)
 
 plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
-                            limits_error = c(0.05, 0.1),
+                            limits_error = c(0.05, 0.1, 0.5),
                             title2 = '', title3 = '', ...) {
     if (nlayers(r) > 1 && is.null(e)) {
         e = sd.raster(r)
