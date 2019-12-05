@@ -9,7 +9,7 @@ graphics.off()
 
 file_obs = 'outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc'
 dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018/'
-fireMonths = 9
+fireMonths = 8
 
 qs =seq(0, 1, 0.1)
 
@@ -27,7 +27,7 @@ cols_pc = rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090',
                 '#ddffdd','#e0f3f8','#abd9e9','#74add1','#4575b4','#313695'))
 limits_pc = c(1, 5, 10, 20, 40, 60, 80, 90, 95, 99)
 
-grab_cache = FALSE
+grab_cache = F
 
 dat = brick(file_obs)
 months = lapply(fireMonths, seq, nlayers(dat), by = 12)
@@ -184,12 +184,12 @@ png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png
     plot_ppoints <- function(sumDir = 'X', limits, labelss, cols) {
         ppoint = mapply(YearBeat, 1:length(obs_slt), obs_slt, sim_qrs, sumDir = sumDir)
         ppoint = layer.apply(ppoint, function(i) i)
-     
-        ppoint_maps = list(mean(ppoint), ppoint[[nlayers(ppoint)]], ppoint[[nlayers(ppoint)-1]])
+        
+        ppoint_maps = list(mean(ppoint), ppoint[[nlayers(ppoint)]], ppoint[[5]])
     
         if (sumDir == 'X') {
             title2 = c("Quantile of\nfire season", "", "")
-            title3 = c("Average 2001-2019", "2019", "2018")
+            title3 = c("Average 2001-2019", "2019", "2005")
         } else {
             title2 = c("Probability of\nfire season", "", "")
             title3 = c("", "", "")
