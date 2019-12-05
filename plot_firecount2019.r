@@ -8,8 +8,8 @@ source("libs/filename.noPath.r")
 graphics.off()
 
 file_obs = 'outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc'
-dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-firecount/constant_post_2018_2/'
-fireMonths = 7:8
+dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018/'
+fireMonths = 9
 
 qs =seq(0, 1, 0.1)
 
