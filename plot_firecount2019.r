@@ -1,6 +1,6 @@
 library(raster)
 library(rasterExtras)
-library(gitBasedProjects)
+#library(gitBasedProjects)
 library(ncdf4)
 source("libs/plotStandardMap.r")
 source("libs/sd.raster.r")
@@ -9,6 +9,7 @@ graphics.off()
 
 file_obs = 'outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc'
 dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-firecount/constant_post_2018_params-dlanduse_errors_seasonalIgnitions_TNorm/'
+dir_sim = 'D:/amazon_fires/outputs/sampled_posterior_ConFire_solutions-firecount/constant_post_2018/'
 fireMonths = 8
 
 qs =seq(0, 1, 0.1)
@@ -27,7 +28,7 @@ cols_pc = rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090',
                 '#ddffdd','#e0f3f8','#abd9e9','#74add1','#4575b4','#313695'))
 limits_pc = c(1, 5, 10, 20, 40, 60, 80, 90, 95, 99)
 
-grab_cache = FALSE
+grab_cache = TRUE
 
 dat = brick(file_obs)
 months = lapply(fireMonths, seq, nlayers(dat), by = 12)
@@ -181,19 +182,21 @@ png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png
         return(transalteUnits(out))
     }
 
-    plot_ppoints <- function(sumDir = 'X', limits, labelss, cols) {
+    plot_ppoints <- function(sumDir = 'X', limits, labelss, cols, dat_diff = NaN) {
         ppoint = mapply(YearBeat, 1:length(obs_slt), obs_slt, sim_qrs, sumDir = sumDir)
         ppoint = layer.apply(ppoint, function(i) i)
-     
-        ppoint_maps = list(mean(ppoint), ppoint[[nlayers(ppoint)]], ppoint[[nlayers(ppoint)-1]])
-    
+        
+        ppoint_maps = list(ppoint[[4]], ppoint[[nlayers(ppoint) - 1]], ppoint[[nlayers(ppoint)]])
+        
+        if (!is.na(dat_diff)) ppoint_maps = lapply(ppoint_maps, function(i) i - dat_diff)
         if (sumDir == 'X') {
             title2 = c("Quantile of\nfire season", "", "")
-            title3 = c("Average 2001-2019", "2019", "2018")
+            title3 = c("2005", "2018", "2019")
         } else {
             title2 = c("Probability of\nfire season", "", "")
             title3 = c("", "", "")
         }
+        
         mapply(plotStandardMap, ppoint_maps,
                title2 = title2,
                title3 = title3,
@@ -209,9 +212,9 @@ png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png
         return(ppoint_maps)
     }
     ppoint_maps = plot_ppoints('X', limits_pc-50, c(-50, limits_pc-50, 50), cols_pc)
-    limits_pr = c(20, 40, 60, 80, 90, 95, 99)
+    limits_pr = c(50, 90, 95, 99)
     cols_pr = c('#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1','#dd3497','#ae017e','#7a0177','#49006a')
-    plot_ppoints('Y', limits_pr - 50, c(0, limits_pr, 100), cols_pr)
+    plot_ppoints('Y', limits_pr, c(0, limits_pr, 100), cols_pr, dat_diff = -50)
     
 dev.off()
 
