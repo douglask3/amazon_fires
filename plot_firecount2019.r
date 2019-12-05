@@ -206,8 +206,9 @@ png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png
                        labelss = labelss,
                        rightx = 0.9, units = '%')
         par(mar = mar) 
+        return(ppoint_maps)
     }
-    plot_ppoints('X', limits_pc-50, c(-50, limits_pc-50, 50), cols_pc)
+    ppoint_maps = plot_ppoints('X', limits_pc-50, c(-50, limits_pc-50, 50), cols_pc)
     limits_pr = c(20, 40, 60, 80, 90, 95, 99)
     cols_pr = c('#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1','#dd3497','#ae017e','#7a0177','#49006a')
     plot_ppoints('Y', limits_pr - 50, c(0, limits_pr, 100), cols_pr)
@@ -215,3 +216,5 @@ png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png
 dev.off()
 
 writeRaster.gitInfo(ppoint_maps[[2]], 'outputs/quantilePosition_2019_firecount.nc', overwrite = TRUE)
+
+
