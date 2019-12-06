@@ -8,8 +8,8 @@ source("libs/filename.noPath.r")
 graphics.off()
 
 file_obs = 'outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc'
-dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018/'
-fireMonths = 8
+dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018_2/'
+fireMonths = 7
 
 qs =seq(0, 1, 0.1)
 
@@ -185,11 +185,11 @@ png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png
         ppoint = mapply(YearBeat, 1:length(obs_slt), obs_slt, sim_qrs, sumDir = sumDir)
         ppoint = layer.apply(ppoint, function(i) i)
         
-        ppoint_maps = list(mean(ppoint), ppoint[[nlayers(ppoint)]], ppoint[[5]])
+        ppoint_maps = list(mean(ppoint), ppoint[[nlayers(ppoint)]], ppoint[[11]])
     
         if (sumDir == 'X') {
             title2 = c("Quantile of\nfire season", "", "")
-            title3 = c("Average 2001-2019", "2019", "2005")
+            title3 = c("Average 2001-2019", "2019", "2011")
         } else {
             title2 = c("Probability of\nfire season", "", "")
             title3 = c("", "", "")
