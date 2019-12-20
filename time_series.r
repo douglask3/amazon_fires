@@ -1,8 +1,10 @@
 climate = list(dir = 'outputs/amazon_region/climate/',
                files = c(pr = 'precip2001-2019.nc',
                          emc = 'emc-2001-2019.nc',
-                         soilw = 'soilw.0-10cm.gauss.2000-2019.nc'),
-               cols = c("#000099", "#AA00AA", "cyan"))
+                         air = 'tasMax_2001-2019.nc',
+                         air = 'air2001-2019.nc',
+                         soilw = 'soilw.0-10cm.gauss.2001-2019.nc'),
+               cols = c("#000099", "#AA00AA", "black", "green", "cyan"))
 
 
 human = list(dir = 'outputs/amazon_region/human/',
@@ -12,7 +14,7 @@ human = list(dir = 'outputs/amazon_region/human/',
              cols = c("green", "brown", "black"))
 
 vegetation = list(dir = "outputs/amazon_region/vegetation/",
-             files = c(soilw_max = 'MaxOverMean_soilw.0-10cm.gauss.2000-2019.nc',
+             files = c(soilw_max = 'MaxOverMean_soilw.0-10cm.gauss.2001-2019.nc',
                          tree = 'treecover-2001-June2018.nc',
                          veg = 'vegcover-2001-June2018.nc'),
              cols = c("cyan", "#000099", "green"))
@@ -21,10 +23,10 @@ fireCount = list(dir = 'outputs/amazon_region/fire_counts/',
                  files = c(fireCount = 'firecount_TERRA_M__T.nc'),
              cols = c("red"))
 
-lat = -12.5
-lon = -60
+lat = -9
+lon = -65
 
-fireMonths = 1:12
+fireMonths = 8:9
 
 months = lapply(fireMonths, seq, 210, by = 12)
 monthsByYr = lapply(1:min(sapply(months, length)),
@@ -42,7 +44,7 @@ loadDat <- function(file, dir) {
 plotWindow <- function(info) {
     dats = lapply(info$files, loadDat, info$dir)
 
-    plot(c(2001, 2017), c(0.0001, 1), type = 'n', log = 'y')
+    plot(c(2001, 2017), c(0.0001, 1), type = 'n')
     
     mapply(function(x, col) lines(seq(2001,2017,length.out = length(x)),
            x, col = col, lwd = 2), dats, info$cols)
