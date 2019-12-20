@@ -9,13 +9,18 @@ graphics.off()
 
 file_obs = 'outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc'
 dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018_2/'
-fireMonths = 7
+fireMonths = 8
 
 qs =seq(0, 1, 0.1)
 
 cols_fc = c('#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a',
             '#e31a1c','#bd0026','#800026')
-limits_fc = c(0, 1, 10, 100, 200, 400, 600, 800)
+#cols_fc = c('#ffff99','#fed976','#fd8d3c','#e31a1c','#800026')
+limits_fc = c(0, 1, 10, 50, 100, 200, 400, 600)
+limits_fc = c(0, 10, 50, 100, 200, 500, 750, 1000)
+
+dcols_fc =rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090','#ffffbf','#e0f3f8','#abd9e9','#74add1','#4575b4','#313695'))
+dlimits_fc = c(-500, -200, -100,  -50, -10, 10, 50, 100, 200, 500)
 
 cols_qs = c('#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1','#dd3497','#ae017e',
             '#7a0177','#49006a')
@@ -29,11 +34,14 @@ limits_pc = c(1, 5, 10, 20, 40, 60, 80, 90, 95, 99)
 
 grab_cache = F
 
+mod_summ_file = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018_full/model_summary.nc'
+
 dat = brick(file_obs)
 months = lapply(fireMonths, seq, nlayers(dat), by = 12)
 monthsByYr = lapply(1:min(sapply(months, length)),
                     function(yr) sapply(months, function(m) m[yr]))
 
+monthsByYr = monthsByYr[-1]
 
 summeryFile <- function(file, meanMonths = TRUE, ...) {
     
@@ -72,58 +80,78 @@ select_item <- function(i, rs = sims) layer.apply(rs, function(r) r[[i]])
 obs = summeryFile(file_obs)
 obs_last = obs[[nlayers(obs)]]
 obs_mean = mean(obs)
-obs_maps = list(obs_mean, obs_last, qrs(obs))
+obs_maps = list(obs_mean, obs_last - obs_mean, qrs(obs))
 
 
-files_sim = list.files(dir_sim, full.names = TRUE)
-files_sim = files_sim[grepl('sample_', files_sim)][1:10]
+#files_sim = list.files(dir_sim, full.names = TRUE)
+#files_sim = files_sim[grepl('sample_', files_sim)][1:10]
 
-sims = lapply(files_sim, summeryFile, varname = "burnt_area")
+#sims = lapply(files_sim, summeryFile, varname = "burnt_area")
 
 tfile = paste0('temp/simsConv2Yrs_summary-', length(sims), '.Rd')
 if (file.exists(tfile) && grab_cache) {
     load(tfile)
 } else {
-    simrs =  lapply(1:nlayers(obs), select_item, sims)
-    sim_mean = mean.listedRasters(simrs)
+    
+    simrs = lapply(monthsByYr, function(mns)
+        brick(mod_summ_file, varname = "burnt_area", level = mns)[[c(5, 50, 95)]])
+    
+    sim_mean = mean.listedRasters(sim_means)        
+    sim_mean[is.na(obs_mean)] = NaN
+    
     sim_last = tail(simrs, 1)[[1]]
-    sim_qrs = layer.apply(sims, qrs)
+
+    sim_qrs = layer.apply(1:3, function(i)                  
+                sum(layer.apply(simrs, function(r) sim_last[[i]] > r[[i]])))
+    
     sim_qrs[[1]][is.na(obs[[1]])] = NaN
-    sim_maps = list(sim_mean, sim_last, sim_qrs)
+    sim_maps = list(sim_mean, sim_last - sim_mean, sim_qrs)
     save(simrs, sim_mean, sim_last, sim_qrs, sim_maps, file = tfile)
 }
 
-cols = list(cols_fc, cols_fc,  cols_qs)
-limits = list(limits_fc, limits_fc, limits_qs-0.5)
+cols = list(cols_fc, dcols_fc,  cols_qs)
+limits = list(limits_fc, dlimits_fc, limits_qs-0.5)
 graphics.off()
 png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png"),
-    height = 9.8, width = 5, res = 300, units = 'in')
+    height = 12, width = 5, res = 300, units = 'in')
 
+    #layout(rbind(c(1, 2, 2, 3),
+    #             c(4, 5, 5, 6),
+    #             c(7, 7, 8, 8),
+    #             c(9, 10, 10, 11),
+    #             12,
+    #             c(13, 14, 14, 15),
+    #             16),
+    #       heights = c(1, 1, 0.3, 1, 0.3, 1, 0.3), widths = c(1, 0.9, 0.1, 1))
     layout(rbind(c(1, 2, 2, 3),
                  c(4, 5, 5, 6),
-                 c(7, 7, 8, 8),
-                 c(9, 10, 10, 11),
-                 12,
-                 c(13, 14, 14, 15),
-                 16),
-           heights = c(1, 1, 0.3, 1, 0.3, 1, 0.3), widths = c(1, 0.9, 0.1, 1))
+                 c(7, 8, 8, 9),
+                 c(10, 11, 11, 12),
+                 13,
+                 c(14, 15, 15, 16),
+                 17),
+           heights = c(1, 1, 0.33, 1, 0.33, 1, 0.33), widths = c(1, 0.9, 0.1, 1))
     mar = c(0, 0, 0, 0)
     par(mar = mar, oma = c(0, 1.2, 1.2, 0))
     mapply(plotStandardMap, obs_maps, cols = cols, limits = limits,
            title2 = c("Observations", "", ""),
-           title3 = c("Average 2001-2019", "2019", "No. years >"))
+           title3 = c("Average 2002-2019", "2019", "No. years >"))
     mapply(plotStandardMap, sim_maps, cols = cols, limits = limits, 
            title2 = c("Simulated", "", ""))
 
     par(mar = c(3, 0, 0, 0))                  
-    StandardLegend(cols_fc, limits_fc, obs_maps[[1]], 0.9)
-    mtext('fire counts', side = 1, line = -2.5)
+    StandardLegend(cols_fc, limits_fc, obs_maps[[1]], 0.9, oneSideLabels = FALSE)
+    #mtext('fire counts', side = 1, line = -2.5)
+    
+    StandardLegend(dcols_fc, dlimits_fc, obs_maps[[1]], 0.9, extend_min = TRUE, oneSideLabels = FALSE)
+    mtext('fire counts', side = 1, line = -3.8, adj = -0.65, xpd = TRUE)
+
     labelss = limits_qs
     labelss[seq(1, length(labelss), 2)] = ''
     StandardLegend(cols_qs, limits_qs, obs_maps[[3]],
                    labelss = c('0', labelss),
                    adj = 0,extend_max = FALSE)
-    mtext('No. years', side = 1, line = -2.5, adj = 0.75)
+    mtext('No. years', side = 1, line = -3, adj = 0.65)
     par(mar = mar)
     
     obs_slt = summeryFile(file_obs, FALSE)
