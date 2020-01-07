@@ -2,7 +2,7 @@ library(raster)
 source("libs/writeRaster.Standard.r")
 source("libs/convert_pacific_centric_2_regular.r")
 
-extent = extent(c(-85, -30, -60, 13))
+extent = extent(c(129, 155, -44, -26))
 
 dirs = list.dirs('outputs/')
 dirs = dirs[!grepl('_region', dirs)]
