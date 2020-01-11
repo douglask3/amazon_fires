@@ -10,6 +10,7 @@ graphics.off()
 file_obs = 'outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc'
 dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-firecount/constant_post_2018_params-dlanduse_errors_seasonalIgnitions_TNorm/'
 dir_sim = 'D:/amazon_fires/outputs/sampled_posterior_ConFire_solutions-firecount/constant_post_2018/'
+dir_sim = 'outputs/ensemble_example/'
 fireMonths = 8
 
 qs =seq(0, 1, 0.1)
@@ -17,6 +18,18 @@ qs =seq(0, 1, 0.1)
 cols_fc = c('#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a',
             '#e31a1c','#bd0026','#800026')
 limits_fc = c(0, 1, 10, 100, 200, 400, 600, 800)
+
+"cols_fc = list(list(0.1803921568627451, 0.5450980392156862, 0.3411764705882353),
+            list(0.0, 0.75, 0.75),list(0.75, 0.75, 0.0),
+            list(0.9607843137254902, 0.8705882352941177, 0.7019607843137254),
+            list(0.8549019607843137, 0.6470588235294118, 0.12549019607843137),
+            list(1.0, 0.8431372549019608, 0.0),
+            list(0.9803921568627451, 0.5019607843137255, 0.4470588235294118),
+            list(0.6980392156862745, 0.13333333333333333, 0.13333333333333333))
+
+cols_fc = sapply(cols_fc, function(i) do.call(rgb, i))
+limits_fc = c(1, 10, 50, 100, 200, 500, 1000)"
+#limits_fc = c(10, 50, 100, 200, 500, 1000, 1500)
 
 cols_qs = c('#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1','#dd3497','#ae017e',
             '#7a0177','#49006a')
@@ -28,7 +41,7 @@ cols_pc = rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090',
                 '#ddffdd','#e0f3f8','#abd9e9','#74add1','#4575b4','#313695'))
 limits_pc = c(1, 5, 10, 20, 40, 60, 80, 90, 95, 99)
 
-grab_cache = TRUE
+grab_cache = F
 
 dat = brick(file_obs)
 months = lapply(fireMonths, seq, nlayers(dat), by = 12)
@@ -47,7 +60,8 @@ summeryFile <- function(file, meanMonths = TRUE, ...) {
     }
     
     dat = brick(file, ...)
-    fireSeasonYr_mean <- function(mnths) mean(dat[[mnths]])
+    
+    fireSeasonYr_mean <- function(mnths) sum(dat[[mnths]])
     fireSeasonYr      <- function(mnths)     (dat[[mnths]])
     
     if (meanMonths)  maps = layer.apply(monthsByYr, fireSeasonYr_mean)
