@@ -13,14 +13,17 @@ StandardLegend <- function(cols, limits, dat, rightx = 0.95, extend_max = TRUE, 
                            ylabposScling = 1, extend_max = extend_max, ...)
 
 plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
-                            limits_error = c(0.05, 0.1, 0.5),
+                            limits_error = c(0.5),
                             title2 = '', title3 = '', ...) {
     if (nlayers(r) > 1 && is.null(e)) {
-        e = sd.raster(r)
+        e = r[[1:2]]
+        e[] = t(apply(r[], 1, quantile, c(0.1, 0.9), na.rm = TRUE))
+        e = 1-e[[1]]/e[[2]]#sd.raster(r)
         r = mean(r)
     } 
     r[r>9E9] = NaN
     if (!is.null(e)) e[is.na(r)] = NaN
+    
     plot_raster_from_raster(r, e = e,
                             cols = cols, limits = limits, add_legend = FALSE,
                             quick = TRUE, ePatternRes = 5, ePatternThick = 0.67,
