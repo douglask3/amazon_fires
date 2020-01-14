@@ -31,7 +31,8 @@ plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
     } 
     r[r>9E9] = NaN
     if (!is.null(e)) e[is.na(r)] = NaN
-    plot(c(-85, -36), c(-56, 15), xlab = '', ylab = '', axes = FALSE, type ='n')
+    
+    plot(c(129, 155), c(-44, -26), xlab = '', ylab = '', axes = FALSE, type ='n')
     grid()
     plot_raster_from_raster(r, e = e,
                             cols = cols, limits = limits, add_legend = FALSE,
