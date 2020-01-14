@@ -16,7 +16,7 @@ regridFiles <- function(dir) {
     files_in  = files_in[grepl('.nc', files_in)]
 
     files_out = strsplit(files_in, '//', fixed = TRUE)
-    files_out = sapply(files_out, paste0, collapse = "/amazon_region/")
+    files_out = sapply(files_out, paste0, collapse = "/Australia_region/")
     
     regridFile <- function(file_in, file_out) { 
         print(file_in)
