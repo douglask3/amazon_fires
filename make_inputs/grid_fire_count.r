@@ -3,7 +3,8 @@ library(snow)
 library(ncdf4)
 source("libs/writeRaster.Standard.r")
 
-fileName = "data/DL_FIRE_M6_95447/fire_archive_M6_95447.csv"
+dir = "data/DL_FIRE_M6_97558/"
+
 years = 2001:2019
 nlines_per_step = 10000
 
@@ -53,7 +54,8 @@ processFile <- function(file, nlines_per_step, rv, lonlat2.5) {
                 if (length(cell) == 0) return(rv)
                 else if (length(cell) > 1) {
                     print("more than one")
-                }                
+                }     
+                if (yr > length(rv)) return(rv)           
                 rv[[yr]][cell, mnth] = rv[[yr]][cell, mnth] + conf         
                 return(rv)
             }
@@ -71,6 +73,8 @@ processFile <- function(file, nlines_per_step, rv, lonlat2.5) {
     cl = makeSOCKcluster(c("localhost", "localhost", "localhost", "localhost", "localhost", "localhost", "localhost"))
         rout = parLapply(cl, 1:ceiling(nlines/nlines_per_step), readLines,
                          nlines_per_step, lonlat2.5, rv, years)
+        #rout = lapply(1:ceiling(nlines/nlines_per_step), readLines,
+        #                 nlines_per_step, lonlat2.5, rv, years)
     stopCluster(cl)
     
     for (ri in rout) for (yr in 1:length(rv))
@@ -96,8 +100,11 @@ lonlat2.5 = xyFromCell(r[[1]], 1:length(r[[1]]))/2.5
 #years = sapply(years, function(year) strsplit(year, '-')[[1]][1])
 #years = as.numeric(years)
 
+files = list.files(dir, full.names = TRUE)
+files = rev(files[grepl('.csv', files)])
 
-rv = processFile(fileName, nlines_per_step, rv, lonlat2.5)
+rvi = lapply(files, processFile, nlines_per_step, rv, lonlat2.5)
+for (rvii in rvi)  for (yr in 1:length(rvii)) rv[[yr]] = rv[[yr]] + rvii[[yr]]
 
 #sats = unique(unlist(lapply(rv, names)))[-1]
 r[] = NaN
@@ -123,6 +130,6 @@ mask = raster(mask_file)
 rr_rs = raster::resample(rr,  mask)
 
 
-writeRaster.Standard(rr_rs, 'outputs/firecount_SE_Aus_2001_onwards.nc')
+writeRaster.Standard(rr_rs, 'outputs/firecount_SE_Aus_2001_onwards_new.nc')
 #writeRaster(r, file = "MODIS_fire_count.nc",overwrite=TRUE)
 
