@@ -6,7 +6,7 @@ library(raster)
 source("libs/convert_pacific_centric_2_regular.r")
 library(rhdf5)
 source("libs/writeRaster.Standard.r")
-
+library(rasterExtras)
 dir = 'data/GFED4s/'
 
 mask_file = 'data/climate/climate_mask.nc'
