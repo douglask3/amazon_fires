@@ -6,10 +6,10 @@ library(plotrix)
 library(mapdata)
 library(mapplots)
 
-StandardLegend <- function(cols, limits, dat, rightx = 0.95, extend_max = TRUE, oneSideLabels = TRUE, ...) 
+StandardLegend <- function(cols, limits, dat, rightx = 0.95, extend_max = TRUE, oneSideLabels = TRUE, transpose = FALSE, plot_loc = c(0.01, rightx, 0.3, 0.56), srt = 0, ...) 
         add_raster_legend2(cols, limits, dat = dat, add = FALSE,
-                           transpose = FALSE, srt = 0, oneSideLabels= oneSideLabels,
-                           plot_loc = c(0.01, rightx, 0.3, 0.56),
+                           transpose = transpose, srt = srt, oneSideLabels= oneSideLabels,
+                           plot_loc = plot_loc,
                            ylabposScling = 1, extend_max = extend_max, ...)
 
 lineBox <- function(x, y, ...) 
@@ -17,7 +17,8 @@ lineBox <- function(x, y, ...)
 
 plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
                             limits_error = c(0.5, 0.500000001),
-                            title2 = '', title3 = '', ...) {
+                            title2 = '', title3 = '', left_text_adj = NA, 
+                            left_text_adj_line = -1.5, ...) {
     
     if (nlayers(r) > 1 && is.null(e)) {
         if (nlayers(r) == 3) {
@@ -47,7 +48,7 @@ plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
                
     polygon(c(-62.5, -35, -35, -62.5), c(-56, -56, -50, -50), border = NA, col = "white")
     mtext(title3, adj = 0.1, line = 0.0)
-    mtext(title2, side = 2, line = -1.5)
+    mtext(title2, side = 2, line = left_text_adj_line, adj = left_text_adj)
     if (add_legend) {
         add_raster_legend2(cols, limits, dat = trend[[2]],
                            transpose = FALSE, srt = 0, oneSideLabels= FALSE,
