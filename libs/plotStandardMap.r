@@ -18,7 +18,7 @@ lineBox <- function(x, y, ...)
 plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
                             limits_error = c(0.5, 0.500000001),
                             title2 = '', title3 = '', left_text_adj = NA, 
-                            left_text_adj_line = -1.5, ...) {
+                            left_text_adj_line = -1.5, regions = NULL, ...) {
     
     if (nlayers(r) > 1 && is.null(e)) {
         if (nlayers(r) == 3) {
@@ -41,11 +41,8 @@ plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
                             limits_error = limits_error, add = TRUE, ...)
 
     
-    #lineBox(-c(71.25, 63.75), -c(11.25,  6.25))     
-    #lineBox(-c(61.25, 53.75), -c(11.25,  6.25))   
-    #lineBox(-c(48.25, 43.25), -c( 8.75,  1.25))
-    #lineBox(-c(66.25, 58.75), -c(18.75, 13.75))
-               
+    if (!is.null(regions))  lapply(regions, function(i) lineBox(i[1:2], i[3:4], lty = 2))
+    
     polygon(c(-62.5, -35, -35, -62.5), c(-56, -56, -50, -50), border = NA, col = "white")
     mtext(title3, adj = 0.1, line = 0.0)
     mtext(title2, side = 2, line = left_text_adj_line, adj = left_text_adj)
