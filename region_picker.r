@@ -12,7 +12,7 @@ limits_fc = c(0, 100, 1000, 5000, 10000, 50000, 100000)/ 100000
 cols_fc = c('#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a',
             '#e31a1c','#bd0026','#800026')
 
-limits_dfc = c(-100000, -50000, -10000, -5000, -1000, -100, -10, 10, 100, 1000, 2000, 10000, 50000, 100000)/ 100000
+limits_dfc = c(-200000, -100000, -50000, -10000, -5000, -1000, -100,  100, 1000, 2000, 10000, 50000, 100000, 200000)/ 100000
 dcols_fc =rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090','#ffffbf','#e0f3f8','#abd9e9','#74add1','#4575b4','#313695'))
 
 limits_tree = c(0, 1, 2, 5, 10, 20, 30)
@@ -21,7 +21,8 @@ cols_tree = c('#ffffe5','#f7fcb9','#d9f0a3','#addd8e','#78c679','#41ab5d','#2384
 
 fireSeason = 11:12
 
-regions = list('Wollemi & Blue Mountains' = c(148.75, 151.25, -36.25, -31.25),
+regions = list('Gold Coast/Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
+               'Wollemi & Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
                'Nadgee/Wallagaraugh River' = c(146.25, 148.75, -38.75, -36.25),
                'Kangaroo Island/Adelaide' = c(136.25, 138.75, -36.25, -33.75)) 
 
@@ -42,7 +43,6 @@ fireCount_seasons = lapply(fireSeasons, function(i) mean(fireCount[[i]]))
 fireCount_season_mean = mean(fireCount[[unlist(fireSeasons)]])
 
 fireCount_seasons = lapply(fireCount_seasons, '-', fireCount_season_mean)
-fireCount_seasons = lapply(fireCount_seasons, '/', raster::area(fireCount[[1]]))
 
 png("figs/yearly_fires_map.png", height = 9, width = 7, units = 'in', res = 300)
     layout(t(matrix(c(1:22, 0, 0, 0, 23, 23, 0), nrow = 4)), heights = c(rep(1, 6), 0.3))
@@ -94,7 +94,7 @@ plotRegion <- function(region, name) {
     mtext(name, side = 3, line = -1)
 }
 
-par(mfrow = c(3, 1), mar = c(0, 4, 1, 4), oma = c(4, 0, 1, 0))
+par(mfrow = c(4, 1), mar = c(0, 4, 1, 4), oma = c(4, 0, 1, 0))
 mapply(plotRegion, regions, names(regions))
 axis(1, at = 2001:2020)
 mtext(side = 1, 'Year', line = 2.5)
