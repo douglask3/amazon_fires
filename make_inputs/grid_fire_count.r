@@ -130,6 +130,6 @@ mask = raster(mask_file)
 rr_rs = raster::resample(rr,  mask)
 rr_rs = rr_rs / raster::area(rr_rs[[1]])
 
-writeRaster.Standard(rr_rs, 'outputs/firecount_SE_Aus_2001_onwards.nc')
+writeRaster.Standard(rr_rs, 'outputs/firecount-SE_Aus_2001_onwards.nc')
 #writeRaster(r, file = "MODIS_fire_count.nc",overwrite=TRUE)
 
