@@ -21,9 +21,13 @@ cols_tree = c('#ffffe5','#f7fcb9','#d9f0a3','#addd8e','#78c679','#41ab5d','#2384
 
 fireSeason = 11:12
 
-regions = list('Wollemi & Blue Mountains' = c(149.75, 151.25, -36.25, -31.25),
-               'Nadgee/Wallagaraugh River' = c(146.25, 151.25, -38.75, -36.25),
+regions = list('Wollemi & Blue Mountains' = c(148.75, 151.25, -36.25, -31.25),
+               'Nadgee/Wallagaraugh River' = c(146.25, 148.75, -38.75, -36.25),
                'Kangaroo Island/Adelaide' = c(136.25, 138.75, -36.25, -33.75)) 
+
+variables = paste0("outputs/Australia_region/climate/", c("air2001-2019.nc", "emc-2001-2019.nc", "precip2001-2019.nc", "relative_humidity2001-2019.nc", "soilw.0-10cm.gauss.2001-2019.nc", "tasMax_2001-2019.nc"))
+
+line_cols = c("brown", "purple", "blue", "grey", "cyan", "red")
 
 
 fireSeasons = lapply(2:19, function(i) (i-1) * 12 + fireSeason)
@@ -40,7 +44,7 @@ fireCount_season_mean = mean(fireCount[[unlist(fireSeasons)]])
 fireCount_seasons = lapply(fireCount_seasons, '-', fireCount_season_mean)
 fireCount_seasons = lapply(fireCount_seasons, '/', raster::area(fireCount[[1]]))
 
-png("figs/yearly_fires_map.png", height = 7, width = 7, units = 'in', res = 300)
+png("figs/yearly_fires_map.png", height = 9, width = 7, units = 'in', res = 300)
     layout(t(matrix(c(1:22, 0, 0, 0, 23, 23, 0), nrow = 4)), heights = c(rep(1, 6), 0.3))
     par(mar = rep(0, 4), oma = c(2, 1, 1, 1))
 
@@ -64,16 +68,18 @@ png("figs/yearly_fires_map.png", height = 7, width = 7, units = 'in', res = 300)
                    extend_min = TRUE, units = 'counts/k~m2~')
 dev.off()
 
+variables = lapply(variables, brick)
+
 plotRegion <- function(region, name) {
     plot(c(2001, 2020), c(0, 1), axes = FALSE, xlab = '', ylab = '', type = 'n')
-    plotVar <- function(var, col, line = 0, side = 2) {
-        y = unlist(layer.apply(raster::crop(fireCount, extent(region)), sum.raster))
+    plotVar <- function(var, col, line = 0, side = 2, ...) {
+        y = unlist(layer.apply(raster::crop(var, extent(region)), sum.raster, na.rm = TRUE))
         rangeY = range(y)
         
         scale0 <- function(x, rx) (x - rx[1]) / diff(rx)
         
         y = scale0(y, rangeY)
-        lines(seq(2001, by = 1/12, length.out = length(y)), y, col = col, lwd = 1.5)
+        lines(seq(2001, by = 1/12, length.out = length(y)), y, col = col, ...)
         
         labels = unique(signif(seq(rangeY[1], rangeY[2], length.out = 7), 1))
         if (sum(labels <= rangeY[2]) < 4) labels = unique(signif(seq(rangeY[1], rangeY[2], length.out = 7), 2))
@@ -81,7 +87,10 @@ plotRegion <- function(region, name) {
         at = scale0(labels, rangeY)
         axis(side = side, at = at, labels = labels, line = line, col = col)
     }
-    plotVar(fireCount, 'red')
+   
+    mapply(plotVar, variables, line_cols, line = c(0, 1, 0, 1, 2, 3),
+            side = c(2, 2, 4, 4, 4, 4), lty = 2)
+    plotVar(fireCount, 'orange', lwd = 2.5, line = 3)
     mtext(name, side = 3, line = -1)
 }
 
