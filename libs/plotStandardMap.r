@@ -18,7 +18,8 @@ lineBox <- function(x, y, ...)
 plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
                             limits_error = c(0.5, 0.500000001),
                             title2 = '', title3 = '', left_text_adj = NA, 
-                            left_text_adj_line = -1.5, regions = NULL, ...) {
+                            left_text_adj_line = -1.5, left_text_srt = 0, 
+                            regions = NULL, ...) {
     
     if (nlayers(r) > 1 && is.null(e)) {
         if (nlayers(r) == 3) {
@@ -33,7 +34,8 @@ plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
     r[r>9E9] = NaN
     if (!is.null(e)) e[is.na(r)] = NaN
     
-    plot(c(129, 155), c(-44, -21.25), xlab = '', ylab = '', axes = FALSE, type ='n')
+    #plot(c(129, 155), c(-44, -21.25), xlab = '', ylab = '', axes = FALSE, type ='n')
+    plot(c(112, 155), c(-44, -10.5), xlab = '', ylab = '', axes = FALSE, type ='n', yaxs = 'i')
     grid()
     plot_raster_from_raster(r, e = e,
                             cols = cols, limits = limits, add_legend = FALSE,
@@ -44,8 +46,8 @@ plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
     if (!is.null(regions))  lapply(regions, function(i) lineBox(i[1:2], i[3:4], lty = 2))
     
     polygon(c(-62.5, -35, -35, -62.5), c(-56, -56, -50, -50), border = NA, col = "white")
-    mtext(title3, adj = 0.1, line = 0.0)
-    mtext(title2, side = 2, line = left_text_adj_line, adj = left_text_adj)
+    mtext(title3, adj = 0.1, line = 0.0, srt = left_text_srt)
+    mtext(title2, side = 1, line = left_text_adj_line, adj = left_text_adj, srt = left_text_srt)
     if (add_legend) {
         add_raster_legend2(cols, limits, dat = trend[[2]],
                            transpose = FALSE, srt = 0, oneSideLabels= FALSE,
