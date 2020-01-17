@@ -6,9 +6,9 @@ graphics.off()
 options(scipen = 999)
 
 treeCover = 'outputs/Australia_region/vegetation/treecover-2001-June2018.nc'
-fireCount = 'outputs/Australia_region/firecount_SE_Aus_2001_onwards.nc'
+fireCount = 'outputs/Australia_region/firecount-SE_Aus_2001_onwards.nc'
 
-limits_fc = c(0, 100, 1000, 5000, 10000, 50000, 100000)/ 100000
+limits_fc = c(0, 1000, 2000, 5000, 10000, 20000, 50000, 100000)/ 100000
 cols_fc = c('#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a',
             '#e31a1c','#bd0026','#800026')
 
@@ -44,18 +44,18 @@ fireCount_season_mean = mean(fireCount[[unlist(fireSeasons)]])
 
 fireCount_seasons = lapply(fireCount_seasons, '-', fireCount_season_mean)
 
-png("figs/yearly_fires_map.png", height = 9, width = 7, units = 'in', res = 300)
+png("figs/yearly_fires_map.png", height = 8, width = 7, units = 'in', res = 300)
     layout(t(matrix(c(1:22, 0, 0, 0, 23, 23, 0), nrow = 4)), heights = c(rep(1, 6), 0.3))
     par(mar = rep(0, 4), oma = c(2, 1, 1, 1))
 
-    plotStandardMap(treeCover, title2 = 'Tree\ncover', cols = cols_tree, limits = limits_tree,
-                    left_text_adj = 0.1, left_text_adj_line = -2.5)
+    plotStandardMap(treeCover, title2 = 'Tree cover', cols = cols_tree, limits = limits_tree,
+                    left_text_adj = 0.1)
 
     StandardLegend(cols_tree, limits_tree, fireCount_seasons[[1]], 0.9, transpose = TRUE,
                    plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, units = '%', maxLab = 100)
 
-    plotStandardMap(fireCount_season_mean, title2 = 'Average\nfire\nseason', cols = cols_fc,
-                    limits = limits_fc, left_text_adj = 0.1, left_text_adj_line = -3.5)
+    plotStandardMap(fireCount_season_mean, title2 = '     Average\n   fire season', cols = cols_fc,
+                    limits = limits_fc, left_text_adj = 0.1, left_text_adj_line = -1.25)
     StandardLegend(cols_fc, limits_fc, fireCount_seasons[[1]], 0.9, transpose = TRUE,
                    plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, extend_max = TRUE)
 
@@ -68,7 +68,7 @@ png("figs/yearly_fires_map.png", height = 9, width = 7, units = 'in', res = 300)
                    extend_min = TRUE, units = 'counts/k~m2~')
 dev.off()
 
-variables = lapply(variables, brick)
+#variables = lapply(variables, brick)
 
 plotRegion <- function(region, name) {
     plot(c(2001, 2020), c(0, 1), axes = FALSE, xlab = '', ylab = '', type = 'n')
@@ -88,13 +88,15 @@ plotRegion <- function(region, name) {
         axis(side = side, at = at, labels = labels, line = line, col = col)
     }
    
-    mapply(plotVar, variables, line_cols, line = c(0, 1, 0, 1, 2, 3),
-            side = c(2, 2, 4, 4, 4, 4), lty = 2)
-    plotVar(fireCount, 'orange', lwd = 2.5, line = 3)
+    #mapply(plotVar, variables, line_cols, line = c(0, 1, 0, 1, 2, 3),
+    #        side = c(2, 2, 4, 4, 4, 4), lty = 2)
+    plotVar(fireCount, 'red', lwd = 2.5, line = 0)
     mtext(name, side = 3, line = -1)
 }
 
+png("figs/region_INPUT_TS.png", height = 10, width = 7, units = 'in', res = 300)
 par(mfrow = c(4, 1), mar = c(0, 4, 1, 4), oma = c(4, 0, 1, 0))
 mapply(plotRegion, regions, names(regions))
 axis(1, at = 2001:2020)
 mtext(side = 1, 'Year', line = 2.5)
+dev.off()
