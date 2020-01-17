@@ -70,7 +70,7 @@ processFile <- function(file, nlines_per_step, rv, lonlat2.5) {
     }
     #rout = lapply(1:10, readLines, nlines_per_step, lonlat2.5, rv)
     
-    cl = makeSOCKcluster(c("localhost", "localhost", "localhost", "localhost", "localhost", "localhost", "localhost"))
+    cl = makeSOCKcluster(c("localhost", "localhost", "localhost"))
         rout = parLapply(cl, 1:ceiling(nlines/nlines_per_step), readLines,
                          nlines_per_step, lonlat2.5, rv, years)
         #rout = lapply(1:ceiling(nlines/nlines_per_step), readLines,
@@ -128,7 +128,7 @@ mapply(addYear2rr, rv, years)
 
 mask = raster(mask_file)
 rr_rs = raster::resample(rr,  mask)
-
+rr_rs = rr_rs / raster::area(rr_rs[[1]])
 
 writeRaster.Standard(rr_rs, 'outputs/firecount_SE_Aus_2001_onwards_new.nc')
 #writeRaster(r, file = "MODIS_fire_count.nc",overwrite=TRUE)
