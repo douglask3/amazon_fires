@@ -44,7 +44,7 @@ fireCount_season_mean = mean(fireCount[[unlist(fireSeasons)]])
 
 fireCount_seasons = lapply(fireCount_seasons, '-', fireCount_season_mean)
 
-png("figs/yearly_fires_map.png", height = 8, width = 7, units = 'in', res = 300)
+png("figs/yearly_fires_map.png", height = 8.5, width = 7, units = 'in', res = 300)
     layout(t(matrix(c(1:22, 0, 0, 0, 23, 23, 0), nrow = 4)), heights = c(rep(1, 6), 0.3))
     par(mar = rep(0, 4), oma = c(2, 1, 1, 1))
 
@@ -55,7 +55,7 @@ png("figs/yearly_fires_map.png", height = 8, width = 7, units = 'in', res = 300)
                    plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, units = '%', maxLab = 100)
 
     plotStandardMap(fireCount_season_mean, title2 = '     Average\n   fire season', cols = cols_fc,
-                    limits = limits_fc, left_text_adj = 0.1, left_text_adj_line = -1.25)
+                    limits = limits_fc, left_text_adj = 0.1, left_text_adj_line = -1.0)
     StandardLegend(cols_fc, limits_fc, fireCount_seasons[[1]], 0.9, transpose = TRUE,
                    plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, extend_max = TRUE)
 
