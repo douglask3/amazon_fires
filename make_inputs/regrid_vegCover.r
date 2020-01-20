@@ -9,7 +9,7 @@ mask_file = 'data/climate/climate_mask.nc'
 dirs = c(treecover = 'data/treecover/',
          nonetreecover = 'data/nontree/')
 
-output_dir = 'outputs/vegetation/'
+output_dir = 'outputs/vegetation/from_2001/'
 
 mask = raster(mask_file)
 
