@@ -64,10 +64,11 @@ MakeByStartYr <- function(firstYr = NULL) {
     min_soilw = min.raster(soilw, na.rm = TRUE)
     soilw = (soilw - min_soilw)/(1 - min_soilw)
 
-    seaCy12 <- function(r) {	
+    seaCy12 <- function(r, mnOnly = FALSE) {	
         Cy12 <- function(mnth) {
 	    subr = r[[(mnth-11):mnth]]
             mn = mean(subr)
+            if (mnOnly) return(mn)
             out = max(subr) / mn
             out[mn == 0] = 0
 	    return(out)
@@ -76,6 +77,7 @@ MakeByStartYr <- function(firstYr = NULL) {
     }
 
     soilw_max = seaCy12(soilw)
+    soil_mean = seaCy12(soilw, TRUE)
     soilw = soilw[[13:nlayers(soilw)]]
 
     filesN = sapply(files, filename.noPath, noExtension=TRUE)
@@ -84,6 +86,7 @@ MakeByStartYr <- function(firstYr = NULL) {
 
     writeInput(soilw, 'outputs/climate/', file_out, yrs)
     writeInput(soilw_max, 'outputs/vegetation/', paste0('MaxOverMean_', file_out), yrs)
+    writeInput(soil_mean, 'outputs/vegetation/', paste0('MeanAnnual_', file_out), yrs)
 }
 
 MakeByStartYr(firstYr)
