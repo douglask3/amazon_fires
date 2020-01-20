@@ -3,7 +3,7 @@ library(rasterExtras)
 library(gitBasedProjects)
 library(ncdf4)
 source("libs/filename.noPath.r")
-source("libs/writeRaster.Standard.r")
+source("libs/writeInput.r")
 
 files = list.files('data/soilw/', full.names=TRUE)
 mask_file = 'data/climate/climate_mask.nc'
@@ -75,15 +75,20 @@ MakeByStartYr <- function(firstYr = NULL) {
     soilw_max = seaCy12(soilw)
     soilw = soilw[[13:nlayers(soilw)]]
 
-    filesN = sapply(files, filename.noPath, noExtension=TRUE)
-    yrs = sapply(filesN, function(file) tail(strsplit(file, '.', fixed = TRUE)[[1]],1))
-    yrs = max(yrs)
-
-    file_out = paste0('outputs/',c('climate/', 'vegetation/MaxOverMean_'),
-                        filesN[2], '-', yrs, '.nc')
     
-    writeRaster.Standard(soilw    , file_out[1])
-    writeRaster.Standard(soilw_max, file_out[2])
+    #
+
+    filesN = sapply(files, filename.noPath, noExtension=TRUE)
+    yrs = sapply(filesN, function(file) tail(strsplit(file, '.', fixed = TRUE)[[1]],1))[-1]
+    #yrs = max(yrs)
+    file_out = paste0(filename.noPath(filesN[2], noExtension=T), '.')
+    #file_out = paste0('outputs/',c('climate/', 'vegetation/MaxOverMean_'),
+    #                    filesN[2], '-', yrs, '.nc')
+    
+    #writeRaster.Standard(soilw    , file_out[1])
+    #writeRaster.Standard(soilw_max, file_out[2])
+    writeInput(soilw, 'outputs/climate/', file_out, yrs)
+    writeInput(soilw_max, 'outputs/vegetation/', paste0('MaxOverMean_', file_out), yrs)
 }
 
 MakeByStartYr(firstYr)
