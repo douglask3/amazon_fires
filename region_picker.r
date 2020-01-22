@@ -5,7 +5,7 @@ source("libs/plotStandardMap.r")
 graphics.off()
 options(scipen = 999)
 
-treeCover = 'outputs/Australia_region/vegetation/treecover-2001-June2018.nc'
+treeCover = 'outputs/Australia_region/vegetation/from_2001/treecover-2001-June2018.nc'
 fireCount = 'outputs/Australia_region/firecount-SE_Aus_2001_onwards.nc'
 
 limits_fc = c(0, 1000, 2000, 5000, 10000, 20000, 50000, 100000)/ 100000
@@ -66,7 +66,7 @@ png("figs/yearly_fires_map.png", height = 8.5, width = 7, units = 'in', res = 30
 
     StandardLegend(dcols_fc, limits_dfc, fireCount_seasons[[1]], 0.9, oneSideLabels = FALSE,
                    extend_min = TRUE, units = 'counts/k~m2~')
-dev.off()
+dev.off.gitWatermark()()
 
 #variables = lapply(variables, brick)
 
@@ -99,4 +99,4 @@ par(mfrow = c(4, 1), mar = c(0, 4, 1, 4), oma = c(4, 0, 1, 0))
 mapply(plotRegion, regions, names(regions))
 axis(1, at = 2001:2020)
 mtext(side = 1, 'Year', line = 2.5)
-dev.off()
+dev.off.gitWatermark()
