@@ -2,6 +2,8 @@ library(raster)
 library(rasterExtras)
 source("libs/make_transparent.r")
 source("libs/plotStandardMap.r")
+source("libs/dev.off.gitInfo.r")
+library(gitBasedProjects)
 graphics.off()
 layers = c(5, 95)
 cols = c("tan", "#DDDD00", "red")
@@ -11,6 +13,9 @@ error_file = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/consta
 uncert_file = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018_full_2002/model_summary.nc'
 
 obs = "outputs/Australia_region/firecount-SE_Aus_2001_onwards.nc"
+
+liklihood = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018_full_2002/fire_summary_observed_liklihood.nc'
+
 
 mnths = 1:228
 
@@ -52,6 +57,8 @@ if (file.exists(temp_file)) {
 }
 
 obs = brick(obs)
+p_value = brick(liklihood, varname = "variable")
+liklihood = brick(liklihood, varname = "variable_0")
 
 cropMean <- function(r, extent, nme1, nme2, ...) {
     tfile = paste0(temp_file_rs, nme1, nme2, '.Rd')
@@ -72,7 +79,7 @@ cropMean <- function(r, extent, nme1, nme2, ...) {
             ri[is.na(ri)] = 0 
             ri[ri<0] = 0
             
-            unlist(layer.apply(ri, sum.raster))
+            unlist(layer.apply(ri, mean.raster))
         }
         r = sapply(r, cropMeani)     
         save(r, file = tfile)
@@ -84,26 +91,44 @@ polygonCoords <- function(x, y, col, border = col, ...) {
     polygon(c(x, rev(x)), c(y[,1], rev(y[,2])), col = col, border = border, ...)
 }
 
-plotRegion <- function(extent, name) {
+plotRegion <- function(extent, name, last) {
     tFile = paste(temp_file_rs, name, '.Rd')
-    if (file.exists(tFile)) {
+    if (file.exists(tFile) & FALSE) {
         load(tFile) 
     } else {
         error_r  = cropMean(error, extent, name, 'error')
         uncert_r  = cropMean(uncert, extent, name, 'uncert')
         obs_r = cropMean(list(obs, obs), extent, name, 'obs')
+        obs_p = cropMean(list(p_value), extent, name, 'obs_p1')
+        obs_l = cropMean(list(liklihood), extent, name, 'obs_l')
     }
     
-    par(mar = c(1, 3, 0, 0))    
+    par(mar = c(1, 3, 0, 2))    
     maxY = max(error_r, uncert_r, obs_r)
+    
     plot(c(12, max(mnths) + 2), c(0, maxY), xaxt = 'n', type = 'n', xaxs = 'i',
          xlab = '', ylab = '')
+    if (last)  axis(1, at = seq(1, length(mnths), 12),
+                    labels = seq(2001, length.out = floor(length(mnths)/12)))
     mtext(name, adj = 0.1, line = -1.5)
    
     polygonCoords(mnths, error_r, cols[1], lwd = 2)
     polygonCoords(mnths, uncert_r, cols[2], lwd = 2)
     polygonCoords(mnths, obs_r, cols[3], lwd = 2)
 
+    labels = seq(0, 1, 0.2)
+    obs_l = (1 + obs_l)*maxY/2
+    
+
+    lines(mnths, obs_l, col = make.transparent("black", 0.67), lwd = 1.5)
+    #lines(mnths, obs_l, col = make.transparent("black", 1 - obs_p))
+    
+    test2 = obs_p > 0.99
+    test1 = obs_p > 0.95
+    points(mnths[test1], obs_l[test1], pch = 19, cex = 2)
+    points(mnths[test2], obs_l[test2], pch = 4 , cex = 2)
+    axis(4, at = (1 + labels)*maxY/2, labels = labels)
+    
     if (name == 'D') {
          at = seq(1, max(mnths), by = 12)
         axis(1, at = at, labels = 2001 + round(at/12))
@@ -138,9 +163,9 @@ plotRegion <- function(extent, name) {
 
     cols_years = make_col_vector(c("#161843", "#FFFF00", "#a50026"), ncols = 19)
     par(mar = c(3, 0.5, 0, 3))  
-    plot(obs_r, uncert_r, log = 'xy',
+    plot(obs_r, uncert_r,
          xlim = range(obs_r,uncert_r, obs_r*1.3), ylim = range(obs_r,uncert_r, obs_r*1.3),
-         xlab = '', ylab = '', yaxt = 'n')
+         xlab = '', ylab = '', yaxt = 'n', log = 'xy')
     axis(4)
     lines(x = c(0.0001, 9E9), y = c(0.0001,9E9), col = "black", lty = 2)
     
@@ -156,15 +181,20 @@ plotRegion <- function(extent, name) {
     }
 }
 
-png("figs/test_time_series.png", height = 7, width = 12, res = 300, units = 'in')
+png("figs/test_time_series.png", height = 7.3, width = 12, res = 300, units = 'in')
 
 
-layout(t(matrix(1:8, nrow = 2)), widths = c(.75, 0.25))
+layout(rbind(t(matrix(1:8, nrow = 2)), 9), widths = c(.75, 0.25), heights = c(1, 1, 1, 1, 0.1))
 par(oma = c(3, 1.2, 1, 1.2))
 
-mapply(plotRegion, regions, names(regions))
+last = c(rep(FALSE, length(regions)-1), TRUE)
+mapply(plotRegion, regions, names(regions), last)
 
 mtext.units(outer = TRUE, side = 2, 'Fire counts (k~m-2~)', line = -1)
 mtext(outer = TRUE, side = 4, 'Modelled anomolie')
 mtext(side = 1, 'Observed anomolie', line = 2.5)
-dev.off()
+
+par(mar = rep(0, 4))
+plot(0, axes = FALSE, type = 'n')
+dev.off.gitWatermark(comment = 'Note - meteorological input data for 2019/2020 fire season \nso recycled from 2018/2019')
+
