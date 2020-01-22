@@ -1,18 +1,20 @@
 library(raster)
+library(rasterExtras)
 source("libs/make_transparent.r")
+source("libs/plotStandardMap.r")
 graphics.off()
 layers = c(5, 95)
 cols = c("tan", "#DDDD00", "red")
 
-error_file = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018/fire_summary_precentile.nc'
+error_file = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018_full_2002/fire_summary_precentile.nc'
 
-uncert_file = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018/model_summary.nc'
+uncert_file = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018_full_2002/model_summary.nc'
 
-obs = "outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc"
+obs = "outputs/Australia_region/firecount-SE_Aus_2001_onwards.nc"
 
-mnths = 1:227
+mnths = 1:228
 
-fire_season = 8
+fire_season = 12
 
 fire_seasons = mnths[seq(fire_season, max(mnths), by = 12)]
 
@@ -35,10 +37,11 @@ regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
                Central = -c(66.25, 53.75, 11.25, 6.25),
                Deep    = -c(71.25, 58.75, 6.25, 1.25),
                "All Deforested" = 'outputs/amazon_region/treeCoverTrendRegions.nc')
-regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
-               B = -c(61.25, 53.75, 11.25,  6.25),  
-               C = -c(48.25, 43.25,  8.75,  1.25),
-               D = -c(66.25, 58.75, 18.75, 13.75))
+regions = list('Gold Coast, Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
+               'Wollemi,  Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
+               'Nadgee, Wallagaraugh River' = c(146.25, 148.75, -38.75, -36.25),
+               'Kangaroo Island, Adelaide' = c(136.25, 138.75, -36.25, -33.75))
+
 if (file.exists(temp_file)) {
     load(temp_file) 
 } else {
