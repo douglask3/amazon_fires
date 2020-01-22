@@ -66,7 +66,7 @@ png("figs/yearly_fires_map.png", height = 8.5, width = 7, units = 'in', res = 30
 
     StandardLegend(dcols_fc, limits_dfc, fireCount_seasons[[1]], 0.9, oneSideLabels = FALSE,
                    extend_min = TRUE, units = 'counts/k~m2~')
-dev.off.gitWatermark()()
+dev.off.gitWatermark()
 
 #variables = lapply(variables, brick)
 
