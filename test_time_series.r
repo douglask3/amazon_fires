@@ -27,6 +27,8 @@ fire_seasons = mnths[seq(fire_season, max(mnths), by = 12)]
 temp_file_rs = paste0(c('temp/time_sries_fire_vars', layers), collapse = '-')
 temp_file = paste0(temp_file_rs, '-Open.Rd')
 
+grab.cache = TRUE
+
 openPost <- function(mnth, file, layer) {
     print(mnth)
     brick(file, level = mnth)[[layer]]
@@ -47,7 +49,7 @@ regions = list('Gold Coast, Northern Rivers' = c(151.25, 153.75, -31.25, -26.75)
                'Nadgee, Wallagaraugh River' = c(146.25, 148.75, -38.75, -36.25),
                'Kangaroo Island, Adelaide' = c(136.25, 138.75, -36.25, -33.75))
 
-if (file.exists(temp_file)) {
+if (file.exists(temp_file) && grab.cache) {
     load(temp_file) 
 } else {
     error = openPosts(error_file)
@@ -62,7 +64,7 @@ liklihood = brick(liklihood, varname = "variable_0")
 
 cropMean <- function(r, extent, nme1, nme2, ...) {
     tfile = paste0(temp_file_rs, nme1, nme2, '.Rd')
-    if (file.exists(tfile)) {
+    if (file.exists(tfile) && grab.cache) {
         load(tfile)
     } else {
         cropMeani <- function(ri) {
@@ -93,7 +95,7 @@ polygonCoords <- function(x, y, col, border = col, ...) {
 
 plotRegion <- function(extent, name, last) {
     tFile = paste(temp_file_rs, name, '.Rd')
-    if (file.exists(tFile) & FALSE) {
+    if (file.exists(tFile) && grab.cache) {
         load(tFile) 
     } else {
         error_r  = cropMean(error, extent, name, 'error')
