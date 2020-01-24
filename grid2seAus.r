@@ -32,10 +32,7 @@ regridFiles <- function(dir, extent, rname) {
         
         rmask = all(is.na(r)) | any(r > 9E9) 
         if (grepl("lightning", file_in)) rmask = rmask | any(r < 0)
-        if (is.null(mask)) {
-            browser()
-            mask <<- rmask
-        }
+        if (is.null(mask)) mask <<- rmask
         else mask <<- mask | rmask
         writeRaster.Standard(r, file_out)
     }
