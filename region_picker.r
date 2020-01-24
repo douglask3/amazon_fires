@@ -30,6 +30,13 @@ variables = paste0("outputs/Australia_region/climate/", c("air2001-2019.nc", "em
 
 line_cols = c("brown", "purple", "blue", "grey", "cyan", "red")
 
+variables = c("outputs/Australia_region/climate/from_2001/tmaxMax.2001-2019.nc",
+              "outputs/Australia_region/climate/from_2001/emc-2001-2019.nc",
+              "outputs/Australia_region/climate/from_2001/soilw.0-10cm.gauss.2001-2019.nc",
+               "outputs/Australia_region/vegetation/from_2001/MeanAnnual_soilw.0-10cm.gauss.2001-2019.nc")
+
+line_cols = c("brown", "purple", "blue", "green")
+
 
 fireSeasons = lapply(2:19, function(i) (i-1) * 12 + fireSeason)
 
@@ -68,7 +75,10 @@ png("figs/yearly_fires_map.png", height = 8.5, width = 7, units = 'in', res = 30
                    extend_min = TRUE, units = 'counts/k~m2~')
 dev.off.gitWatermark()
 
-#variables = lapply(variables, brick)
+variables = lapply(variables, brick)
+#variables[[3]] = layer.apply(2:nlayers(variables[[3]]), function(i) variables[[3]][[i]] - variables[[3]][[i-1]])
+
+#variables[[3]] = addLayer(variables[[3]][[1]], variables[[3]])
 
 plotRegion <- function(region, name) {
     plot(c(2001, 2020), c(0, 1), axes = FALSE, xlab = '', ylab = '', type = 'n')
@@ -88,13 +98,13 @@ plotRegion <- function(region, name) {
         axis(side = side, at = at, labels = labels, line = line, col = col)
     }
    
-    #mapply(plotVar, variables, line_cols, line = c(0, 1, 0, 1, 2, 3),
-    #        side = c(2, 2, 4, 4, 4, 4), lty = 2)
-    plotVar(fireCount, 'red', lwd = 2.5, line = 0)
+    mapply(plotVar, variables, line_cols, line = c(0, 0, 1, 2),
+            side = c(2, 4, 4, 4), lty = c(1, 2, 1, 1), lwd = 2)
+    plotVar(fireCount, 'red', lwd = 2.5, line = 2)
     mtext(name, side = 3, line = -1)
 }
 
-png("figs/region_INPUT_TS.png", height = 10, width = 7, units = 'in', res = 300)
+png("figs/region_INPUT_TS.png", height = 10, width = 21, units = 'in', res = 300)
 par(mfrow = c(4, 1), mar = c(0, 4, 1, 4), oma = c(4, 0, 1, 0))
 mapply(plotRegion, regions, names(regions))
 axis(1, at = 2001:2020)
