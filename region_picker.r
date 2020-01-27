@@ -2,6 +2,10 @@
 library(raster)
 library(rasterExtras)
 source("libs/plotStandardMap.r")
+source("libs/standardGrid.r")
+library(gitBasedProjects)
+library(ncdf4)
+
 graphics.off()
 options(scipen = 999)
 
@@ -37,6 +41,11 @@ variables = c("outputs/Australia_region/climate/from_2001/tmaxMax.2001-2019.nc",
 
 line_cols = c("brown", "purple", "blue", "green")
 
+variables = paste0("outputs/Australia_region/climate/from_2001/",
+                   c( "emc-2001-2019.nc", "precip2001-2019.nc", "relative_humidity2001-2019.nc", "soilw.0-10cm.gauss.2001-2019.nc", "precip2001-2019.nc"))
+
+line_cols = c("purple", "blue", "grey", "green", "blue")
+line_lty  = c(1, 1, 1, 1, 2)
 
 fireSeasons = lapply(2:19, function(i) (i-1) * 12 + fireSeason)
 
@@ -57,7 +66,7 @@ fireCount_seasons = lapply(fireSeasons, function(i) mean(fireCount[[i]]))
 fireCount_season_mean = mean(fireCount[[unlist(fireSeasons)]])
 
 fireCount_seasons = lapply(fireCount_seasons, '-', fireCount_season_mean)
-
+if (FALSE) {
 png("figs/yearly_fires_map.png", height = 8.5, width = 7, units = 'in', res = 300)
     layout(t(matrix(c(1:22, 0, 0, 0, 23, 23, 0), nrow = 4)), heights = c(rep(1, 6), 0.3))
     par(mar = rep(0, 4), oma = c(2, 1, 1, 1))
@@ -81,14 +90,18 @@ png("figs/yearly_fires_map.png", height = 8.5, width = 7, units = 'in', res = 30
     StandardLegend(dcols_fc, limits_dfc, fireCount_seasons[[1]], 0.9, oneSideLabels = FALSE,
                    extend_min = TRUE, units = 'counts/k~m2~')
 dev.off.gitWatermark()
-
+}
 variables = lapply(variables, brick)
+variables[[5]] = layer.apply(12:nlayers(variables[[5]]), function(i) sum(variables[[5]][[(i-11):i]]))
+variables[[5]] = addLayer(variables[[5]][[1:12]], variables[[5]])
+
 #variables[[3]] = layer.apply(2:nlayers(variables[[3]]), function(i) variables[[3]][[i]] - variables[[3]][[i-1]])
 
 #variables[[3]] = addLayer(variables[[3]][[1]], variables[[3]])
 
 plotRegion <- function(region, name) {
     plot(c(2001, 2020), c(0, 1), axes = FALSE, xlab = '', ylab = '', type = 'n')
+    standardGrid()
     plotVar <- function(var, col, line = 0, side = 2, ...) {
         y = unlist(layer.apply(raster::crop(var, extent(region)), sum.raster, na.rm = TRUE))
         rangeY = range(y)
@@ -105,8 +118,8 @@ plotRegion <- function(region, name) {
         axis(side = side, at = at, labels = labels, line = line, col = col)
     }
    
-    mapply(plotVar, variables, line_cols, line = c(0, 0, 1, 2),
-            side = c(2, 4, 4, 4), lty = c(1, 2, 1, 1), lwd = 2)
+    mapply(plotVar, variables, line_cols, line = c(0, 1, 0, 1, 2),
+            side = c(2, 2, 4, 4, 4), lty = line_lty, lwd = 2)
     plotVar(fireCount, 'red', lwd = 2.5, line = 2)
     mtext(name, side = 3, line = -1)
 }
