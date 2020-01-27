@@ -23,10 +23,10 @@ regridFiles <- function(dir, extent, rname) {
         print(file_out)
         
         r = r0 = brick(file_in)
-        if (extent(r)[2] == 144.5 || any(res(r) != res(mask_eg))) {
+        if (extent(r)[2] == 144.5 || any(res(r) != res(mask_eg))) 
             extent(r) = extent(c(-1.25, 358.75, -90, 90))
-            r = raster::resample(r, mask_eg)
-        }
+        
+        r = raster::resample(r, mask_eg)
         r = convert_pacific_centric_2_regular(r)
         r = raster::crop(r, extent)
         
