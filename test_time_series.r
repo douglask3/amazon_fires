@@ -51,7 +51,7 @@ regions = list('Gold Coast, Northern Rivers' = c(151.25, 153.75, -31.25, -26.75)
                'Wollemi,  Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25))
 
 
-regions = list('SE Aus temperate BL woodland' = 'outputs/SE_TempBLRegion.nc',
+regions = list('SE Aus temperate BL woodland' = 'outputs/Australia_region/SE_TempBLRegion.nc',
                'Gold Coast, Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
                'Wollemi,  Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
                'Nadgee, Wallagaraugh River' = c(146.25, 148.75, -38.75, -36.25),
@@ -97,9 +97,13 @@ cropMean <- function(r, extent, nme1, nme2, ...) {
 }
 
 polygonCoords <- function(x, y, col, border = col, maxY = NaN, ...) {
-    if (!is.na(maxY) && max(y) > maxY)
+    if (!is.na(maxY) && max(y) > maxY) {
+        labels = seq(0, signif(max(y), 1), length.out = 5)
+        labels = labels[labels < max(y)]
+        if (length(labels) < 5) labels = seq(0, signif(max(y), 1), length.out = 10)
+        axis(4, at = labels * maxY/max(y), labels = labels)
         y = maxY * y/max(y)
-    
+    }
     polygon(c(x, rev(x)), c(y[,1], rev(y[,2])), col = col, border = border, ...)
 }
 
@@ -214,10 +218,15 @@ ploFun <- function(fname, plot_control = FALSE, ...) {
         last = c(rep(FALSE, length(regions)-1), TRUE)
         mapply(plotRegion, regions, names(regions), last,
                MoreArgs = list(plot_control = plot_control, ...))
-
-        mtext.units(outer = TRUE, side = 2, 'Fire counts (k~m-2~)', line = -1)
-        mtext(outer = TRUE, side = 4, 'Modelled anomolie')
-        mtext(side = 1, 'Observed anomolie', line = 2.5)
+        
+        if (plot_control) {
+            mtext.units(outer = TRUE, side = 2, 'Standard limitation from controls', line = -1)
+            mtext(outer = TRUE, side = 4, 'Rate of spread factor')
+        } else {
+            mtext.units(outer = TRUE, side = 2, 'Fire counts (k~m-2~)', line = -1)
+            mtext(outer = TRUE, side = 4, 'Modelled anomolie')
+            mtext(side = 1, 'Observed anomolie', line = 2.5)
+        }
 
         par(mar = rep(0, 4))
         plot(0, axes = FALSE, type = 'n')
