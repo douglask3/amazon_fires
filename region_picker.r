@@ -42,6 +42,13 @@ fireSeasons = lapply(2:19, function(i) (i-1) * 12 + fireSeason)
 
 
 treeCover = mean(brick(treeCover))  * 100
+treeCoverR = treeCover
+ll = xyFromCell(treeCoverR, 1:length(treeCoverR[]))
+test = ll[,1] > 140 & ll[,2] < -22 & treeCoverR[] > 10
+test[is.na(test)] = FALSE
+treeCoverR[!test] = NaN
+writeRaster.gitInfo(treeCoverR, 'outputs/SE_TempBLRegion.nc', overwrite = TRUE)
+
 fireCount = brick(fireCount) 
 
 fireCount_mean = mean(fireCount)
