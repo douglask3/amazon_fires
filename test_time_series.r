@@ -16,7 +16,6 @@ obs = "outputs/Australia_region/firecount-SE_Aus_2001_onwards.nc"
 
 liklihood = 'outputs/sampled_posterior_ConFire_solutions-RoSfirecount-Tnorm/constant_post_2018_full_2002_maxMaxT-MaxW/fire_summary_observed_liklihood.nc'
 
-controls = c("standard_fuel", "standard_moisture", "standard_ignitions", "standard_suppression", "Rate_Of_Spread")
 
 mnths = 1:228
 
@@ -56,8 +55,6 @@ if (file.exists(temp_file) && grab.cache) {
 } else {
     error = openPosts(error_file)
     uncert = openPosts(uncert_file, varname = "burnt_area")
-    controls = lapply(controls, function(i) openPosts(uncert_file, varname = i))
-   
     save(error, uncert, file = temp_file)
 }
 
