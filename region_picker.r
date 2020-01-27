@@ -56,7 +56,7 @@ ll = xyFromCell(treeCoverR, 1:length(treeCoverR[]))
 test = ll[,1] > 140 & ll[,2] < -22 & treeCoverR[] > 10
 test[is.na(test)] = FALSE
 treeCoverR[!test] = NaN
-writeRaster.gitInfo(treeCoverR, 'outputs/SE_TempBLRegion.nc', overwrite = TRUE)
+writeRaster.gitInfo(treeCoverR, 'outputs/Australia_region/SE_TempBLRegion.nc', overwrite = TRUE)
 
 fireCount = brick(fireCount) 
 
