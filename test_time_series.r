@@ -8,14 +8,15 @@ graphics.off()
 layers = c(5, 95)
 cols = c("tan", "#DDDD00", "red")
 
-error_file = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018_full_2002/fire_summary_precentile.nc'
+error_file = 'outputs/sampled_posterior_ConFire_solutions-RoSfirecount-Tnorm/constant_post_2018_full_2002_maxMaxT-MaxW/fire_summary_precentile.nc'
 
-uncert_file = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018_full_2002/model_summary.nc'
+uncert_file = 'outputs/sampled_posterior_ConFire_solutions-RoSfirecount-Tnorm/constant_post_2018_full_2002_maxMaxT-MaxW/model_summary.nc'
 
 obs = "outputs/Australia_region/firecount-SE_Aus_2001_onwards.nc"
 
-liklihood = 'outputs/sampled_posterior_ConFire_solutions-firecount-Tnorm/constant_post_2018_full_2002/fire_summary_observed_liklihood.nc'
+liklihood = 'outputs/sampled_posterior_ConFire_solutions-RoSfirecount-Tnorm/constant_post_2018_full_2002_maxMaxT-MaxW/fire_summary_observed_liklihood.nc'
 
+controls = c("standard_fuel", "standard_moisture", "standard_ignitions", "standard_suppression", "Rate_Of_Spread")
 
 mnths = 1:228
 
@@ -24,36 +25,38 @@ fire_season = 12
 fire_seasons = mnths[seq(fire_season, max(mnths), by = 12)]
 
 
-temp_file_rs = paste0(c('temp/time_sries_fire_vars', layers), collapse = '-')
+temp_file_rs = paste0(c('temp/time_sries_fire_vars-ROS-TMAX-WMAX', layers), collapse = '-')
 temp_file = paste0(temp_file_rs, '-Open.Rd')
 
-grab.cache = TRUE
+fname = "figs/test_time_series-ROS-TNAX-WMAX.png"
 
-openPost <- function(mnth, file, layer) {
+grab.cache = FALSE
+
+openPost <- function(mnth, file, layer, ...) {
     print(mnth)
-    brick(file, level = mnth)[[layer]]
+    brick(file, level = mnth, ...)[[layer]]
 }
 
-openPosts <- function(file)
-    lapply(layers, function(i) layer.apply(mnths, openPost, file, i))
+openPosts <- function(file, ...)
+    lapply(layers, function(i) layer.apply(mnths, openPost, file, i, ...))
 
-regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
-               B = -c(61.25, 53.75, 11.25,  6.25),  
-               C = -c(48.25, 43.25,  8.75,  1.25),
-               D = -c(66.25, 58.75, 18.75, 13.75),
-               Central = -c(66.25, 53.75, 11.25, 6.25),
-               Deep    = -c(71.25, 58.75, 6.25, 1.25),
-               "All Deforested" = 'outputs/amazon_region/treeCoverTrendRegions.nc')
+
 regions = list('Gold Coast, Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
                'Wollemi,  Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
                'Nadgee, Wallagaraugh River' = c(146.25, 148.75, -38.75, -36.25),
                'Kangaroo Island, Adelaide' = c(136.25, 138.75, -36.25, -33.75))
 
+
+regions = list('SE Aus temperate BL woodland' = 'outputs/SE_TempBLRegion.nc',
+               'Gold Coast, Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
+               'Wollemi,  Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25))
+
 if (file.exists(temp_file) && grab.cache) {
     load(temp_file) 
 } else {
     error = openPosts(error_file)
-    uncert = openPosts(uncert_file)
+    uncert = openPosts(uncert_file, varname = "burnt_area")
+    controls = lapply(controls, function(i) openPosts(uncert_file, varname = i))
    
     save(error, uncert, file = temp_file)
 }
@@ -70,9 +73,8 @@ cropMean <- function(r, extent, nme1, nme2, ...) {
         cropMeani <- function(ri) {
             if (is.character(extent)) {#
                 r0 = ri
-                mask = raster(extent) == 6
-                ri[!mask] = 0
-                ri = crop(ri, extent( -83.75, -50, -23.3, 0))
+                mask = is.na(raster(extent) )
+                ri[mask] = 0
                 
             } else {
                 ri = crop(ri, extent(extent, ...))                
@@ -90,6 +92,7 @@ cropMean <- function(r, extent, nme1, nme2, ...) {
 }
 
 polygonCoords <- function(x, y, col, border = col, ...) {
+    #y[y<0.00001]=0.00001
     polygon(c(x, rev(x)), c(y[,1], rev(y[,2])), col = col, border = border, ...)
 }
 
@@ -98,17 +101,17 @@ plotRegion <- function(extent, name, last) {
     if (file.exists(tFile) && grab.cache) {
         load(tFile) 
     } else {
-        error_r  = cropMean(error, extent, name, 'error')
-        uncert_r  = cropMean(uncert, extent, name, 'uncert')
         obs_r = cropMean(list(obs, obs), extent, name, 'obs')
         obs_p = cropMean(list(p_value), extent, name, 'obs_p1')
         obs_l = cropMean(list(liklihood), extent, name, 'obs_l')
+        error_r  = cropMean(error, extent, name, 'error')
+        uncert_r  = cropMean(uncert, extent, name, 'uncert')
     }
     
     par(mar = c(1, 3, 0, 2))    
     maxY = max(error_r, uncert_r, obs_r)
     
-    plot(c(12, max(mnths) + 2), c(0, maxY), xaxt = 'n', type = 'n', xaxs = 'i',
+    plot(c(12, max(mnths) + 2), c(0.0, maxY), xaxt = 'n', type = 'n', xaxs = 'i',
          xlab = '', ylab = '')
     if (last)  axis(1, at = seq(1, length(mnths), 12),
                     labels = seq(2001, length.out = floor(length(mnths)/12)))
@@ -183,7 +186,7 @@ plotRegion <- function(extent, name, last) {
     }
 }
 
-png("figs/test_time_series.png", height = 7.3, width = 12, res = 300, units = 'in')
+png(fname, height = 7.3, width = 12, res = 300, units = 'in')
 
 
 layout(rbind(t(matrix(1:8, nrow = 2)), 9), widths = c(.75, 0.25), heights = c(1, 1, 1, 1, 0.1))
