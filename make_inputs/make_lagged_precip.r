@@ -11,9 +11,10 @@ dir = 'outputs/climate/from_2001/'
 
 startLayer = "X2001.01.01"
 
-calLag <- function(lag, dat, dir, fname) {
+calLag <- function(lag, dat, dat0, dir, fname) {
     memSafeFile.initialise('temp/')
         cal <- function(i) {
+            print(i)
             out = sum(dat[[(i-lag+1):i]])
             out = writeRaster(out, filename = memSafeFile(), overwrite = TRUE)
             return(out)
@@ -21,10 +22,14 @@ calLag <- function(lag, dat, dir, fname) {
 
         spoint = which(startLayer == names(dat))
         out = layer.apply(spoint:nlayers(dat), cal)
+        if(!is.null(dat0)) out = out/dat0
+
         fname = paste0(dir, fname)
         out = writeRaster.Standard(out, fname)
     memSafeFile.remove()
+    return(out)
 }
 
-dat12 = calLag(12, dat, dir, 'precip_yrLag.2001-2019.nc')
-dat36 = calLag(36, dat, dir, 'precip_threeyrLag.2001-2019.nc')
+dat120 = calLag(120, dat, NULL, dir, 'precip_tenyrLag.2001-2019.nc')
+dat12 = calLag(12, dat, dat120, dir, 'precip_yrLag.2001-2019.nc')
+dat36 = calLag(36, dat, dat120,dir, 'precip_threeyrLag.2001-2019.nc')
