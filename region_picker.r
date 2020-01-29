@@ -3,7 +3,7 @@ library(raster)
 library(rasterExtras)
 source("libs/plotStandardMap.r")
 source("libs/standardGrid.r")
-library(gitBasedProjects)
+#library(gitBasedProjects)
 library(ncdf4)
 
 graphics.off()
@@ -22,7 +22,6 @@ dcols_fc =rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090','#ffffbf','#e0
 limits_tree = c(0, 1, 2, 5, 10, 20, 30)
 cols_tree = c('#ffffe5','#f7fcb9','#d9f0a3','#addd8e','#78c679','#41ab5d','#238443','#006837','#004529')
 
-
 fireSeason = 11:12
 
 regions = list('Gold Coast/Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
@@ -30,25 +29,42 @@ regions = list('Gold Coast/Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
                'Nadgee/Wallagaraugh River' = c(146.25, 148.75, -38.75, -36.25),
                'Kangaroo Island/Adelaide' = c(136.25, 138.75, -36.25, -33.75)) 
 
-variables = paste0("outputs/Australia_region/climate/", c("air2001-2019.nc", "emc-2001-2019.nc", "precip2001-2019.nc", "relative_humidity2001-2019.nc", "soilw.0-10cm.gauss.2001-2019.nc", "tasMax_2001-2019.nc"))
-
-line_cols = c("brown", "purple", "blue", "grey", "cyan", "red")
-
-variables = c("outputs/Australia_region/climate/from_2001/tmaxMax.2001-2019.nc",
-              "outputs/Australia_region/climate/from_2001/emc-2001-2019.nc",
-              "outputs/Australia_region/climate/from_2001/soilw.0-10cm.gauss.2001-2019.nc",
-               "outputs/Australia_region/vegetation/from_2001/MeanAnnual_soilw.0-10cm.gauss.2001-2019.nc")
-
-line_cols = c("brown", "purple", "blue", "green")
-
 variables = paste0("outputs/Australia_region/climate/from_2001/",
                    c( "emc-2001-2019.nc", "precip2001-2019.nc", "relative_humidity2001-2019.nc", "soilw.0-10cm.gauss.2001-2019.nc", "precip2001-2019.nc"))
+vnames     = c("emc", "precip", "rh", "soilw", "precip12")
+units = c("%", "mm ~yr-1~", "%", "%", "mm ~yr-1~")
 
 line_cols = c("purple", "blue", "grey", "green", "blue")
 line_lty  = c(1, 1, 1, 1, 2)
-
+map_cols = list(rev(c('#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1','#dd3497','#ae017e','#7a0177','#49006a')),
+                c('#ffffd9','#edf8b1','#c7e9b4','#7fcdbb','#41b6c4','#1d91c0','#225ea8','#253494','#081d58'),
+                c('#ffffff','#f5e0f5','#e3a9e3','#cc03cc','#969696','#737373','#525252','#252525','#000000'),
+                c('#f7fcf5','#e5f5e0','#c7e9c0','#a1d99b','#74c476','#41ab5d','#238b45','#006d2c','#00441b'),
+                c('#fff7fb','#ece2f0','#d0d1e6','#a6bddb','#67a9cf','#3690c0','#02818a','#016c59','#014636'))
+                
+maps_dcols = list(c('#8e0152','#c51b7d','#de77ae','#f1b6da','#fde0ef','#f7f7f7','#e6f5d0','#b8e186','#7fbc41','#4d9221','#276419'),
+                  c('#543005','#8c510a','#bf812d','#dfc27d','#f6e8c3','#f5f5f5','#c7eae5','#80cdc1','#35978f','#01665e','#003c30'),
+                  c('#67001f','#b2182b','#d6604d','#f4a582','#fddbc7','#f7f7f7','#d1e5f0','#92c5de','#4393c3','#2166ac','#053061'),
+                  c('#40004b','#762a83','#9970ab','#c2a5cf','#e7d4e8','#f7f7f7','#d9f0d3','#a6dba0','#5aae61','#1b7837','#00441b'),
+                  c('#a50026','#d73027','#f46d43','#fdae61','#fee090','#ffffbf','#e0f3f8','#abd9e9','#74add1','#4575b4','#313695'))
+                  
+maps_limits = list(c(0, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24) *100,
+                   c(0, 1, 2, 3, 4, 5, 6),
+                   c(0, 10, 20, 30, 40, 50, 60, 70),
+                   c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) *100,
+                   c(0, 1, 2, 3, 4, 5, 6))
+ 
+maps_dlimits = list(c(-1, -0.5, -0.2, -0.1, -0.05, 0.05, 0.1, 0.2, 0.5, 1)*10,
+                    c(-4, -2, -1, -0.5, -0.1, 0.1, 0.5, 1, 2, 5),
+                    c(-20, -10, -5, -2, -1, 1, 2, 5, 10, 20),
+                    c(-0.2, -0.1, -0.05, -0.02, -0.01, 0.01, 0.02, 0.05, 0.1, 0.2)*100,
+                    c(-2, -1, -0.5, -0.2, -0.1, 0.1, 0.2, 0.5, 1, 2))
+                    
+scaling = c(100, 1, 1, 100, 1)
+                    
+                    
+                   
 fireSeasons = lapply(2:19, function(i) (i-1) * 12 + fireSeason)
-
 
 treeCover = mean(brick(treeCover))  * 100
 treeCoverR = treeCover
@@ -60,41 +76,50 @@ writeRaster.gitInfo(treeCoverR, 'outputs/Australia_region/SE_TempBLRegion.nc', o
 
 fireCount = brick(fireCount) 
 
-fireCount_mean = mean(fireCount)
+plotVariable <- function(variable, name, limits, cols, dlimits, dcols, units, scaling = 1) {
+    fname = paste0("figs/yearly_", name, ".png")
+    
+    #fireCount_mean = mean(variable)
 
-fireCount_seasons = lapply(fireSeasons, function(i) mean(fireCount[[i]]))
-fireCount_season_mean = mean(fireCount[[unlist(fireSeasons)]])
+    variable_seasons = lapply(fireSeasons, function(i) mean(variable[[i]]) * scaling)
+    variable_seasons_mean = mean(variable[[unlist(fireSeasons)]]) * scaling
+    
+    dvariable_seasons = lapply(variable_seasons, function(i) i - variable_seasons_mean)
 
-fireCount_seasons = lapply(fireCount_seasons, '-', fireCount_season_mean)
-if (FALSE) {
-png("figs/yearly_fires_map.png", height = 8.5, width = 7, units = 'in', res = 300)
-    layout(t(matrix(c(1:22, 0, 0, 0, 23, 23, 0), nrow = 4)), heights = c(rep(1, 6), 0.3))
-    par(mar = rep(0, 4), oma = c(2, 1, 1, 1))
+    png(fname, height = 8.5, width = 7, units = 'in', res = 300)
+        layout(t(matrix(c(1:22, 0, 0, 0, 23, 23, 0), nrow = 4)), heights = c(rep(1, 6), 0.3))
+        par(mar = rep(0, 4), oma = c(2, 1, 1, 1))
 
-    plotStandardMap(treeCover, title2 = 'Tree cover', cols = cols_tree, limits = limits_tree,
-                    left_text_adj = 0.1)
+        plotStandardMap(treeCover, title2 = 'Tree cover', cols = cols_tree, limits = limits_tree,
+                        left_text_adj = 0.1)
 
-    StandardLegend(cols_tree, limits_tree, fireCount_seasons[[1]], 0.9, transpose = TRUE,
-                   plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, units = '%', maxLab = 100)
+        StandardLegend(cols_tree, limits_tree, treeCover, 0.9, transpose = TRUE,
+                       plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, units = '%', maxLab = 100)
 
-    plotStandardMap(fireCount_season_mean, title2 = '     Average\n   fire season', cols = cols_fc,
-                    limits = limits_fc, left_text_adj = 0.1, left_text_adj_line = -1.0)
-    StandardLegend(cols_fc, limits_fc, fireCount_seasons[[1]], 0.9, transpose = TRUE,
-                   plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, extend_max = TRUE)
+        plotStandardMap(variable_seasons_mean, title2 = '     Average\n   fire season', cols = cols,
+                        limits = limits, left_text_adj = 0.1, left_text_adj_line = -1.0)
+        StandardLegend(cols, limits, variable_seasons_mean, 0.9, transpose = TRUE,
+                       plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, extend_max = TRUE)
 
-    text.units('counts/k~m2~', x = 0.33, y = 0.5, srt = 90)
+        text.units(units, x = 0.33, y = 0.5, srt = 90)
 
-    mapply(plotStandardMap, fireCount_seasons, title2 = 2002:2019,
-           MoreArgs = list(cols = dcols_fc, limits = limits_dfc, left_text_adj = 0.1, regions = regions))
+        mapply(plotStandardMap, dvariable_seasons, title2 = 2002:2019,
+               MoreArgs = list(cols = dcols, limits = dlimits, left_text_adj = 0.1, regions = regions))
 
-    StandardLegend(dcols_fc, limits_dfc, fireCount_seasons[[1]], 0.9, oneSideLabels = FALSE,
-                   extend_min = TRUE, units = 'counts/k~m2~')
-dev.off.gitWatermark()
+        StandardLegend(dcols, dlimits, dvariable_seasons[[1]], 0.9, oneSideLabels = FALSE,
+                       extend_min = TRUE, units = units)
+    dev.off.gitWatermark()
 }
 variables = lapply(variables, brick)
-variables[[5]] = layer.apply(12:nlayers(variables[[5]]), function(i) sum(variables[[5]][[(i-11):i]]))
-variables[[5]] = addLayer(variables[[5]][[1:12]], variables[[5]])
 
+plotVariable(fireCount, "fireCount", limits_fc, cols_fc, limits_dfc, dcols_fc, 'counts/k~m2~')
+
+
+variables[[5]] = layer.apply(12:nlayers(variables[[5]]), function(i) mean(variables[[5]][[(i-11):i]]))
+variables[[5]] = addLayer(variables[[5]][[1:12]], variables[[5]])
+mapply(plotVariable, variables, vnames, maps_limits, map_cols, maps_dlimits, maps_dcols, units, scaling)
+
+browser()
 #variables[[3]] = layer.apply(2:nlayers(variables[[3]]), function(i) variables[[3]][[i]] - variables[[3]][[i-1]])
 
 #variables[[3]] = addLayer(variables[[3]][[1]], variables[[3]])
