@@ -30,9 +30,9 @@ regions = list('Gold Coast/Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
                'Kangaroo Island/Adelaide' = c(136.25, 138.75, -36.25, -33.75)) 
 
 variables = paste0("outputs/Australia_region/climate/from_2001/",
-                   c( "emc-2001-2019.nc", "precip2001-2019.nc", "relative_humidity2001-2019.nc", "soilw.0-10cm.gauss.2001-2019.nc", "precip2001-2019.nc"))
+                   c( "emc-2001-2019.nc", "precip2001-2019.nc", "rhumMaxMax.2001-2019.nc", "soilw.0-10cm.gauss.2001-2019.nc", "precip_yrLag.2001-2019.nc"))
 vnames     = c("emc", "precip", "rh", "soilw", "precip12")
-units = c("%", "mm ~yr-1~", "%", "%", "mm ~yr-1~")
+units = c("%", "mm ~yr-1~", "%", "%", "%")
 
 line_cols = c("purple", "blue", "grey", "green", "blue")
 line_lty  = c(1, 1, 1, 1, 2)
@@ -52,7 +52,7 @@ maps_limits = list(c(0, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24) *100,
                    c(0, 1, 2, 3, 4, 5, 6),
                    c(0, 10, 20, 30, 40, 50, 60, 70),
                    c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) *100,
-                   c(0, 1, 2, 3, 4, 5, 6))
+                   c(0, 1, 2, 5, 10, 20, 30))
  
 maps_dlimits = list(c(-1, -0.5, -0.2, -0.1, -0.05, 0.05, 0.1, 0.2, 0.5, 1)*10,
                     c(-4, -2, -1, -0.5, -0.1, 0.1, 0.5, 1, 2, 5),
@@ -60,7 +60,7 @@ maps_dlimits = list(c(-1, -0.5, -0.2, -0.1, -0.05, 0.05, 0.1, 0.2, 0.5, 1)*10,
                     c(-0.2, -0.1, -0.05, -0.02, -0.01, 0.01, 0.02, 0.05, 0.1, 0.2)*100,
                     c(-2, -1, -0.5, -0.2, -0.1, 0.1, 0.2, 0.5, 1, 2))
                     
-scaling = c(100, 1, 1, 100, 1)
+scaling = c(100, 1, 1, 100, 100)
                     
                     
                    
@@ -76,7 +76,7 @@ writeRaster.gitInfo(treeCoverR, 'outputs/Australia_region/SE_TempBLRegion.nc', o
 
 fireCount = brick(fireCount) 
 
-plotVariable <- function(variable, name, limits, cols, dlimits, dcols, units, scaling = 1) {
+plotVariable <- function(variable, name, limits, cols, dlimits, dcols, units, scaling = 1, diff = TRUE) {
     fname = paste0("figs/yearly_", name, ".png")
     
     #fireCount_mean = mean(variable)
@@ -84,8 +84,14 @@ plotVariable <- function(variable, name, limits, cols, dlimits, dcols, units, sc
     variable_seasons = lapply(fireSeasons, function(i) mean(variable[[i]]) * scaling)
     variable_seasons_mean = mean(variable[[unlist(fireSeasons)]]) * scaling
     
-    dvariable_seasons = lapply(variable_seasons, function(i) i - variable_seasons_mean)
-
+    if (diff) {
+        variable_seasons = lapply(variable_seasons, function(i) i - variable_seasons_mean)
+        extend_min = TRUE
+    } else {
+        dlimits = limits
+        dcols = cols
+        extend_min = FALSE
+    }
     png(fname, height = 8.5, width = 7, units = 'in', res = 300)
         layout(t(matrix(c(1:22, 0, 0, 0, 23, 23, 0), nrow = 4)), heights = c(rep(1, 6), 0.3))
         par(mar = rep(0, 4), oma = c(2, 1, 1, 1))
@@ -103,26 +109,21 @@ plotVariable <- function(variable, name, limits, cols, dlimits, dcols, units, sc
 
         text.units(units, x = 0.33, y = 0.5, srt = 90)
 
-        mapply(plotStandardMap, dvariable_seasons, title2 = 2002:2019,
+        mapply(plotStandardMap, variable_seasons, title2 = 2002:2019,
                MoreArgs = list(cols = dcols, limits = dlimits, left_text_adj = 0.1, regions = regions))
 
-        StandardLegend(dcols, dlimits, dvariable_seasons[[1]], 0.9, oneSideLabels = FALSE,
-                       extend_min = TRUE, units = units)
+        StandardLegend(dcols, dlimits, variable_seasons[[1]], 0.9, oneSideLabels = FALSE,
+                       extend_min = extend_min, units = units)
     dev.off.gitWatermark()
 }
 variables = lapply(variables, brick)
 
 plotVariable(fireCount, "fireCount", limits_fc, cols_fc, limits_dfc, dcols_fc, 'counts/k~m2~')
 
-
-variables[[5]] = layer.apply(12:nlayers(variables[[5]]), function(i) mean(variables[[5]][[(i-11):i]]))
-variables[[5]] = addLayer(variables[[5]][[1:12]], variables[[5]])
-mapply(plotVariable, variables, vnames, maps_limits, map_cols, maps_dlimits, maps_dcols, units, scaling)
+mapply(plotVariable, variables, paste0(vnames, "-dff"), maps_limits, map_cols, maps_dlimits, maps_dcols, units, scaling)
+mapply(plotVariable, variables, vnames, maps_limits, map_cols, maps_dlimits, maps_dcols, units, scaling, diff = FALSE)
 
 browser()
-#variables[[3]] = layer.apply(2:nlayers(variables[[3]]), function(i) variables[[3]][[i]] - variables[[3]][[i-1]])
-
-#variables[[3]] = addLayer(variables[[3]][[1]], variables[[3]])
 
 plotRegion <- function(region, name) {
     plot(c(2001, 2020), c(0, 1), axes = FALSE, xlab = '', ylab = '', type = 'n')
