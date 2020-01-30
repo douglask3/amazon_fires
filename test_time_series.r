@@ -9,17 +9,21 @@ graphics.off()
 layers = c(5, 95)
 cols = c("tan", "#DDDD00", "red")
 
-error_file = 'outputs/sampled_posterior_ConFire_solutions-RoSfirecount-Tnorm/constant_post_2018_full_2002_maxMaxT-MaxW/fire_summary_precentile.nc'
+dir1 = 'outputs/sampled_posterior_ConFire_solutions-RoSfirecount-Tnorm/'
+dir2 = 'constant_post_2018_full_2002_maxMaxT-MaxW-full-Mem_Npr'
 
-uncert_file = 'outputs/sampled_posterior_ConFire_solutions-RoSfirecount-Tnorm/constant_post_2018_full_2002_maxMaxT-MaxW/model_summary.nc'
+error_file = 'fire_summary_precentile.nc'
+uncert_file = 'model_summary.nc'
+liklihood = 'fire_summary_observed_liklihood.nc'
 
 obs = "outputs/Australia_region/firecount-SE_Aus_2001_onwards.nc"
 
-liklihood = 'outputs/sampled_posterior_ConFire_solutions-RoSfirecount-Tnorm/constant_post_2018_full_2002_maxMaxT-MaxW/fire_summary_observed_liklihood.nc'
+
 
 controls_name = c("standard_fuel", "standard_moisture", "standard_ignitions",
                   "standard_suppression", "variable")
 
+controlLeg = c("Fuel", "Moisture", "Ignitions", "Suppression", "Rate of Spread")
 control_cols = make.transparent(c("#4d9221", "#053061", "#67001f", "#c51b7d", "black"), 0.5)
 control_cols[4] = make.transparent(control_cols[4], 0.5)
 control_dens = c(NA, 30, 30, NA, NA)
@@ -31,10 +35,15 @@ fire_season = 12
 fire_seasons = mnths[seq(fire_season, max(mnths), by = 12)]
 
 
-temp_file_rs = paste0(c('temp/time_sries_fire_vars-ROS-TMAX-WMAX', layers), collapse = '-')
+temp_file_rs = paste0(c('temp/', dir2, layers), collapse = '-')
+#temp_file_rs = paste0(c('temp/time_sries_fire_vars-ROS-TMAX-WMAX-full', layers), collapse = '-')
 temp_file = paste0(temp_file_rs, '-Open.Rd')
 
-fname = "figs/test_time_series-ROS-TNAX-WMAX"
+error_file = paste(dir1, dir2, 'fire_summary_precentile.nc', sep = '/')
+uncert_file = paste(dir1, dir2, 'model_summary.nc', sep = '/')
+liklihood =paste(dir1, dir2,  'fire_summary_observed_liklihood.nc', sep = '/')
+
+fname = paste0("figs/time_series-", dir2, '.png')
 
 grab.cache = TRUE
 
@@ -152,11 +161,18 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
         axis(4, at = (1 + labels)*maxY/2, labels = labels)
     }
     if (name == tail(names(regions), 1)) {
-         at = seq(1, max(mnths), by = 12)
+        at = seq(1, max(mnths), by = 12)
         axis(1, at = at, labels = 2001 + round(at/12))
-
-        legend('top', c('Full postirior', 'Parameter uncertainty', 'Observations'),
-                text.col = cols, horiz = TRUE, bty = 'n')
+        if (plot_control) {
+            for (i in 1:5) {
+                legend('topright', controlLeg, density = control_dens,
+                    fill = make.transparent(control_cols, 0.75), border = control_cols,
+                    horiz = TRUE, bty = 'n')
+            }
+        } else {
+            legend('topright', c('Full postirior', 'Parameter uncertainty', 'Observations'),
+                    text.col = cols, horiz = TRUE, bty = 'n', text.font = 2)
+        }
     }
 
     ratio = apply(uncert_r, 2, function(i) obs_r[,1]/i)[,c(2,1)][fire_seasons,]
