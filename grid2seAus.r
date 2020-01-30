@@ -10,6 +10,7 @@ dirs = dirs[!grepl('_region', dirs)]
 dirs = dirs[!grepl('sampled_posterior_ConFire_solutions', dirs)]
 
 mask = 'data/climate/climate_mask.nc'
+landMask = raster('data/climate/land.nc')
 
 regridFiles <- function(dir, extent, rname) {
     files_in  = list.files(dir, full.names = TRUE)
@@ -20,9 +21,13 @@ regridFiles <- function(dir, extent, rname) {
     
     regridFile <- function(file_in, file_out) { 
         print(file_in)
-        print(file_out)
+        
         
         r = r0 = brick(file_in)
+        if (extent(landMask) == extent(r)) {
+            print("applying land mask")
+            r[landMask==0] = NaN
+        }
         if (extent(r)[2] == 144.5 || any(res(r) != res(mask_eg))) 
             extent(r) = extent(c(-1.25, 358.75, -90, 90))
         
@@ -35,6 +40,7 @@ regridFiles <- function(dir, extent, rname) {
         if (is.null(mask)) mask <<- rmask
         else mask <<- mask | rmask
         writeRaster.Standard(r, file_out)
+        print(file_out)
     }
     mapply(regridFile, files_in, files_out)
     return(files_out)
