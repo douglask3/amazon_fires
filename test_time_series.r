@@ -69,7 +69,8 @@ regions = list('SE Aus temperate BL woodland' = 'outputs/Australia_region/SE_Tem
                'Gold Coast, Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
                'Wollemi,  Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
                'Nadgee, Wallagaraugh River' = c(146.25, 148.75, -38.75, -36.25),
-               'Kangaroo Island, Adelaide' = c(136.25, 138.75, -36.25, -33.75))
+               'Kangaroo Island, Adelaide' = c(136.25, 138.75, -36.25, -33.75),
+               'Black Saturday fires region' = c(143.75, 148.75, -38.75, -33.75))
 
 if (file.exists(temp_file) && grab.cache) {
     load(temp_file) 
@@ -176,16 +177,6 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
     if (name == tail(names(regions), 1)) {
         at = seq(1, max(mnths), by = 12)
         axis(1, at = at, labels = 2001 + round(at/12))
-        if (plot_control) {
-            for (i in 1:5) {
-                legend('topright', controlLeg, density = control_dens,
-                    fill = make.transparent(control_cols, 0.75), border = control_cols,
-                    horiz = TRUE, bty = 'n')
-            }
-        } else {
-            legend('topright', c('Full postirior', 'Parameter uncertainty', 'Observations'),
-                    text.col = cols, horiz = TRUE, bty = 'n', text.font = 2)
-        }
     }
     
     ratio = apply(fire_seasons, 1,function(fs) apply(uncert_r, 2, function(i) sum(obs_r[fs,1])/ max(c(0.01, sum(i[fs])))))
@@ -234,12 +225,12 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
 }
 
 ploFun <- function(fname, plot_control = FALSE, ...) {
-    png(fname, height = 12.2, width = 12, res = 300, units = 'in')
-        if (plot_control) lmat = rbind(t(matrix(rep(1:5, each = 2), nrow = 2)), 6)
-            else lmat = rbind(t(matrix(1:10, nrow = 2)), c(0, 11))
+    png(fname, height = 10.5, width = 7.5, res = 300, units = 'in')
+        if (plot_control) lmat = rbind(t(matrix(rep(1:7, each = 2), nrow = 2)))
+            else lmat = rbind(t(matrix(1:14, nrow = 2)))
         
         layout(lmat, widths = c(.75, 0.25),
-               heights = c(1, 1, 1, 1, 1, 0.2))
+               heights = c(1, 1, 1, 1, 1, 1, 0.3))
         par(oma = c(3, 1.2, 1, 1.2))
 
         last = c(rep(FALSE, length(regions)-1), TRUE)
@@ -249,12 +240,26 @@ ploFun <- function(fname, plot_control = FALSE, ...) {
         if (plot_control) {
             mtext.units(outer = TRUE, side = 2, 'Standard limitation from controls', line = -1)
             mtext(outer = TRUE, side = 4, 'Rate of spread factor')
+            
+            
+            plot.new()
+            par(mar = c(1, 0, 1, 0))
+            for (i in 1:5) {
+                legend('center', controlLeg, density = control_dens,
+                    fill = make.transparent(control_cols, 0.75), border = control_cols,
+                    horiz = TRUE, bty = 'n')
+            }
         } else {
             mtext.units(outer = TRUE, side = 2, 'Fire counts (k~m-2~)', line = -1)
             mtext(outer = TRUE, side = 4, 'Modelled anomolie')
             mtext(side = 1, 'Observed anomolie', line = 2.5)
             
-            par(mar = c(1, 0, 1, 0))
+            
+            par(mar = c(1, 0, 1.5, 0))
+            plot.new()
+            legend('top', c('Full postirior', 'Parameter uncertainty', 'Observations'),
+                    text.col = cols, horiz = TRUE, bty = 'n', text.font = 2, xpd = NA)
+           par(mar = c(1, 0, 1.5, 0))
             plot(c(0.5, 19.5), c(0, 1), type = 'n', axes = FALSE, xlab = '', ylab = '')
             addDumbells(cbind(1:19, 1:19), matrix(rep(c(0,1), 19), ncol = 2), cols_years)
             text(x = seq(1, 19, 6),y = 0,seq(1, 19, 6)+2000, srt = 90, adj = 1.2, xpd = NA)
