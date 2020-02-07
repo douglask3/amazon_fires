@@ -14,6 +14,18 @@ polarPlot.setup <- function(x, y, xlim = NULL, ylim = xlim, type = 'l',...) {
     plot(x, y, pch = 19, cex = 2, xlab = '', ylab = '', axes = FALSE, xlim = xlim, ylim = ylim, type = type,...)
 }
 
+polarPlot.lines <- function(x, y, ...) {
+
+    x = c(x, x[1])
+    y = c(y, y[1])
+    x = 2 * pi * x/12
+    yn = y * cos(x)
+    xn = y * sin(x)
+    x = xn; y = yn
+    
+    lines(x, y, ...)
+}
+
 polarPlot.polygon <- function(x, y, col = "black", alpha = 0.67, border = TRUE, ...) {
     x0 = x; y0 = y
     
@@ -30,14 +42,23 @@ polarPlot.polygon <- function(x, y, col = "black", alpha = 0.67, border = TRUE, 
     }
 }
 
-polarPlot.addGuides <- function(xlim = c(-1, 1), ylim = xlim, axisMonth = 0) {
-    lines(c(0, 0), ylim/2, lwd = 2)
-    lines(ylim/2, c(0, 0), lwd = 2)
+polarPlot.addGuides <- function(xlim = c(-1, 1), ylim = xlim, axisMonth = 0,
+                                labScale = NULL, col = "black", nguides = 6) {
+    for (i in seq(2, 4, 0.01)) {
+        lines(c(0, 0), ylim/i, lwd = i, col = make.transparent("black", 0.9))
+        lines(ylim/i, c(0, 0), lwd = i, col = make.transparent("black", 0.9))
+    }
     
-    
-    at = seq(0, signif(xlim[2], 1), length.ou = 6)
+    if (is.null(labScale)) 
+        at = seq(0, signif(xlim[2], 1), length.out = nguides)
+    else
+        at = seq(0, signif(labScale, 1), length.out = nguides)
+    #browser()
     at = signif(at, 2)
-    at = at[at <= xlim[2]]
+    #at = at[at <= xlim[2]]
+    labels = at
+    
+    if (!is.null(labScale)) at = at * xlim[2]/labScale
     
     mnths = 2 * pi *((0.5:11.5)/12)
     xr = xlim[2] * sin(mnths) * 1.07
@@ -54,14 +75,14 @@ polarPlot.addGuides <- function(xlim = c(-1, 1), ylim = xlim, axisMonth = 0) {
     for (i in 1:4) addRadin(2 * pi *(c(2, 5, 8, 11)/12), lwd = 2)
     
     axisMonth = 2 * pi * (axisMonth + 0.5)/12
-    addCirclegrid <- function(r) {
+    addCirclegrid <- function(r, lab) {
         xr = r * sin(seq(0, 2*pi, 0.01) + axisMonth)
         yr = r * cos(seq(0, 2*pi, 0.01) + axisMonth)   
         lines(xr, yr, col =  make.transparent("white", 0.33))
-        lines(xr, yr, lty = 2,  col =  make.transparent("black", 0.33))
+        lines(xr, yr, lty = 2,  col =  make.transparent(col, 0.33))
         if (r == 0) cex = 2 else cex = 4
         points(xr[1], yr[1], pch = 19, cex = cex, col = "white")
-        text(y = yr[1], x = xr[1], r)                
+        text(y = yr[1], x = xr[1], lab, col = col)                
     }
-    lapply(at, addCirclegrid)
+    mapply(addCirclegrid, at, labels)
 }
