@@ -72,18 +72,6 @@ regions = list('SE Aus temperate BL woodland' = 'outputs/Australia_region/SE_Tem
                'Kangaroo Island, Adelaide' = c(136.25, 138.75, -36.25, -33.75),
                'Black Saturday fires region' = c(143.75, 148.75, -38.75, -33.75))
 
-if (file.exists(temp_file) && grab.cache) {
-    load(temp_file) 
-} else {
-    error = openPosts(error_file)
-    uncert = openPosts(uncert_file, varname = "burnt_area")
-    controls = lapply(controls_name, function(i) openPosts(uncert_file, varname = i))
-    save(error, uncert, controls, file = temp_file)
-}
-
-obs = brick(obs)
-p_value = brick(liklihood, varname = "variable")
-liklihood = brick(liklihood, varname = "variable_0")
 
 cropMean <- function(r, extent, nme1, nme2, ...) {
     tfile = paste0(temp_file_rs, nme1, nme2, '.Rd')
@@ -130,22 +118,29 @@ addDumbells <- function(x, y, cols) {
         function(i) lines(c(i[1], i[2]), c(i[3], i[4]), xpd = NA))
 }
 
-plotRegion <- function(extent, name, last, plot_control = FALSE) {
-    tFile = paste(temp_file_rs, name, '.Rd')
-    if (file.exists(tFile) && FALSE) {
-        load(tFile) 
-    } else {
-        obs_r      = cropMean(list(obs, obs), extent, name, 'obs')
-        obs_p      = cropMean(list(p_value), extent, name, 'obs_p1')
-        obs_l      = cropMean(list(liklihood), extent, name, 'obs_l')
-        error_r    = cropMean(error, extent, name, 'error')
-        uncert_r   = cropMean(uncert, extent, name, 'uncert')
-        
-        controls_r = mapply(cropMean, controls, nme2 = paste0(controls_name, '-CM'), 
-                            MoreArgs = list(extent = extent, nme1 = name), SIMPLIFY = FALSE)
-        save(obs_r, obs_p, obs_l, error_r, uncert_r, controls_r, file = tFile)
-    }
+if (file.exists(temp_file) && grab.cache) {
+    load(temp_file) 
+} else {
+    error = openPosts(error_file)
+    uncert = openPosts(uncert_file, varname = "burnt_area")
+    controls = lapply(controls_name, function(i) openPosts(uncert_file, varname = i))
+    save(error, uncert, controls, file = temp_file)
+}
 
+obs = brick(obs)
+p_value = brick(liklihood, varname = "variable")
+liklihood = brick(liklihood, varname = "variable_0")
+
+plotRegion <- function(extent, name, last, plot_control = FALSE) {
+    obs_r      = cropMean(list(obs, obs), extent, name, 'obs')
+    obs_p      = cropMean(list(p_value), extent, name, 'obs_p1')
+    obs_l      = cropMean(list(liklihood), extent, name, 'obs_l')
+    error_r    = cropMean(error, extent, name, 'error')
+    uncert_r   = cropMean(uncert, extent, name, 'uncert')
+    
+    controls_r = mapply(cropMean, controls, nme2 = paste0(controls_name, '-CM'), 
+                        MoreArgs = list(extent = extent, nme1 = name), SIMPLIFY = FALSE)
+    
     par(mar = c(1, 3, 0, 2))  
     if (plot_control) maxY = 1.15  else maxY = max(error_r, uncert_r, obs_r)
     
@@ -166,8 +161,7 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
         obs_l = 1-(1 + obs_l)*maxY/2
 
         lines(mnths, obs_l, col = make.transparent("black", 0.67), lwd = 1.5)
-        #lines(mnths, obs_l, col = make.transparent("black", 1 - obs_p))
-    
+
         test2 = obs_p > 0.99
         test1 = obs_p > 0.95
         points(mnths[test1], obs_l[test1], pch = 19, cex = 2)
@@ -178,18 +172,6 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
         at = seq(1, max(mnths), by = 12)
         axis(1, at = at, labels = 2001 + round(at/12))
     }
-    
-    ratio = apply(fire_seasons, 1,function(fs) apply(uncert_r, 2, function(i) sum(obs_r[fs,1])/ max(c(0.01, sum(i[fs])))))
-    ratio = t(ratio)
-    #ratio = apply(uncert_r, 2, function(i) obs_r[,1]/i)[,c(2,1)][fire_seasons,]
-    #polygonCoords(mnths[fire_seasons], ratio fire_seasons,
-    #              make.transparent("black", 0.7), lwd = 2)
-    
-    ratioS = ratio + max(ratio)
-    ratioS = cbind(fire_seasons, ratioS * maxY / max(ratioS))
-    arrowFun <- function(x) arrows(x[1], x[2], x[1], x[3], code = 3, angle = 90)
-    #apply(ratioS, 1,  arrowFun)
-    
     
     climScale <- function(r) {
         for (mn in 1:12) {
@@ -240,8 +222,7 @@ ploFun <- function(fname, plot_control = FALSE, ...) {
         if (plot_control) {
             mtext.units(outer = TRUE, side = 2, 'Standard limitation from controls', line = -1)
             mtext(outer = TRUE, side = 4, 'Rate of spread factor')
-            
-            
+                    
             plot.new()
             par(mar = c(1, 0, 1, 0))
             for (i in 1:5) {
@@ -264,9 +245,6 @@ ploFun <- function(fname, plot_control = FALSE, ...) {
             addDumbells(cbind(1:19, 1:19), matrix(rep(c(0,1), 19), ncol = 2), cols_years)
             text(x = seq(1, 19, 6),y = 0,seq(1, 19, 6)+2000, srt = 90, adj = 1.2, xpd = NA)
         }
-
-        #par(mar = rep(0, 4))
-        #plot(0, axes = FALSE, type = 'n')
     dev.off.gitWatermark()
 }
 
