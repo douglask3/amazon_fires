@@ -45,14 +45,16 @@ plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
     if (!is.null(e)) e[is.na(r)] = NaN
     
     #plot(c(129, 155), c(-44, -21.25), xlab = '', ylab = '', axes = FALSE, type ='n')
+    
     plot(c(112, 155), c(-44, -10.5), xlab = '', ylab = '', axes = FALSE, type ='n', yaxs = 'i')
     grid()
-    plot_raster_from_raster(r, e = e,
+    plot_raster_from_raster(r, e = e,coast.lwd = NULL,
                             cols = cols, limits = limits, add_legend = FALSE,interior = TRUE,
                             quick = TRUE, ePatternRes = 5, ePatternThick = 0.67,
                             limits_error = limits_error, add = TRUE, ...)
 
     lines(aus_ste)
+    
     if (!is.null(regions))  lapply(regions, function(i) lineBox(i[1:2], i[3:4], lty = 2))
     
     polygon(c(-62.5, -35, -35, -62.5), c(-56, -56, -50, -50), border = NA, col = "white")
