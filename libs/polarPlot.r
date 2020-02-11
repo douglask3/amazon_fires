@@ -82,7 +82,7 @@ polarPlot.addGuides <- function(xlim = c(-1, 1), ylim = xlim, axisMonth = 0,
         lines(xr, yr, lty = 2,  col =  make.transparent(col, 0.33))
         if (r == 0) cex = 2 else cex = 4
         points(xr[1], yr[1], pch = 19, cex = cex, col = "white")
-        text(y = yr[1], x = xr[1], lab, col = col)                
+        text(y = yr[1], x = xr[1], lab, col = col, xpd = NA)                
     }
     mapply(addCirclegrid, at, labels)
 }
