@@ -92,24 +92,30 @@ plotVariable <- function(variable, name, limits, cols, dlimits, dcols, units, sc
         dcols = cols
         extend_min = FALSE
     }
+    
+    plotMap <- function(let, ...) {
+        plotStandardMap(...)
+        addLetLab(let)
+    }
+    
     png(fname, height = 8.5, width = 7, units = 'in', res = 300)
         layout(t(matrix(c(1:22, 0, 0, 0, 23, 23, 0), nrow = 4)), heights = c(rep(1, 6), 0.3))
         par(mar = rep(0, 4), oma = c(2, 1, 1, 1))
 
-        plotStandardMap(treeCover, title2 = 'Tree cover', cols = cols_tree, limits = limits_tree,
-                        left_text_adj = 0.1)
-
+        plotMap('a', treeCover, title2 = 'Tree cover', cols = cols_tree, limits = limits_tree,
+                left_text_adj = 0.1)
+        
         StandardLegend(cols_tree, limits_tree, treeCover, 0.9, transpose = TRUE,
                        plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, units = '%', maxLab = 100)
 
-        plotStandardMap(variable_seasons_mean, title2 = '     Average', cols = cols,
-                        limits = limits, left_text_adj = 0.1, left_text_adj_line = -1.0)
+        plotMap('b', variable_seasons_mean, title2 = '     Average', cols = cols,
+                limits = limits, left_text_adj = 0.1)
         StandardLegend(cols, limits, variable_seasons_mean, 0.9, transpose = TRUE,
                        plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, extend_max = TRUE)
 
         text.units(units, x = 0.33, y = 0.5, srt = 90)
 
-        mapply(plotStandardMap, variable_seasons, title2 = paste(2002:2019, 2003:2020, sep = '/'),
+        mapply(plotMap, letters[3:20], variable_seasons, title2 = paste(2002:2019, 2003:2020, sep = '/'),
                MoreArgs = list(cols = dcols, limits = dlimits, left_text_adj = 0.1, regions = regions))
 
         StandardLegend(dcols, dlimits, variable_seasons[[1]], 0.9, oneSideLabels = FALSE,

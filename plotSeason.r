@@ -52,23 +52,25 @@ obs = lapply(obs, convert2Climatology)
 obs = lapply(obs, raster::crop, global_extent)
 obs[[1]] = obs[[1]] * 100*4
 
-ModalMap <- function(obs, txt, addLegend) {
+ModalMap <- function(obs, txt, addLegend, let) {
     modal = testModal(obs)
     modal_approx = layer.apply(2:6, function(i) modal[[i]] * (0.5-cos(2*pi * modal[[i+6]]/12)/2))
     modal_approx = 1 + sum(modal_approx, na.rm = TRUE)/modal[[1]]
 
     plotStandardMap(modal_approx -1, limits = modal_limits -1, cols = modal_cols)
+    addLetLab(let)
     mtext(txt, side = 2)
     if (addLegend) 
         StandardLegend(limits = modal_limits - 1, cols = modal_cols, dat = modal_approx-1,
                        extent_max = TRUE,
                        labelss = modal_limits, add = TRUE) 
 }
-png("figs/fire_var_seasonality.png", height = 250, width = 183, res = 300, units = 'mm')
+
+png("figs/fire_var_seasonality.png", height = 270, width = 183, res = 300, units = 'mm')
     par(oma = c(1, 2, 1, 0))
     layout(rbind(cbind(c(1, 4, 4, 5, 5), c(2, 6, 6, 9, 9), c(2, 6, 7, 7, 9), c(2, 6, 6, 9, 9), c(3, 8, 8, 10, 10)),
                  rbind(c(11, 12, 12, 12, 13), c(14, 15, 15, 15, 16))),
-           heights = c(1, 0.68, 0.32, 0.52, 0.48, 1.3, 1.3), width = c(1, 0.15, 0.3, 0.55, 1))
+           heights = c(1, 0.68, 0.32, 0.50, 0.5, 1.3, 1.3), width = c(1, 0.15, 0.3, 0.55, 1))
     
     mask = !any(is.na(obs[[1]]+obs[[2]]))
     x0 = as.vector(obs[[1]][mask]); y0 = as.vector(obs[[2]][mask])
@@ -77,6 +79,7 @@ png("figs/fire_var_seasonality.png", height = 250, width = 183, res = 300, units
     cols = densCols(x,y, colramp = colorRampPalette(reds9), bandwidth = 1)
     par(mar = c(3, 2, 0.5, 1.5)) 
     plot(y~x, pch = 19, col = cols, cex = 1, axes = FALSE, xlab = '', ylab = '')
+    addLetLab('a')
     mtext.units(side = 1, line = 2, 'Burnt area (%)')
     mtext.units(side = 2, line = 2, 'Fire count (k~m-2~)')
     addAxis <- function(labels, side) {
@@ -89,32 +92,35 @@ png("figs/fire_var_seasonality.png", height = 250, width = 183, res = 300, units
     addAxis(c(0, 0.001, 0.01, 0.1, 1, 10, 100), 1)
     addAxis(c(0, 0.001, 0.01, 0.1, 1, 10, 100), 2)
     abline(lm(y~x))
-    mtext.units(side = 3, paste0("~R2~: ",  round(cor(x0, y0)^2, 2)), line = -1.8, adj = 0.1)
-    mtext.units(side = 3, "p < 0.001", line = -3, adj = 0.1)
+    mtext.units(side = 3, paste0("~R2~: ",  round(cor(x0, y0)^2, 2)), line = -2.8, adj = 0.1)
+    mtext.units(side = 3, "p < 0.001", line = -4, adj = 0.1)
     
     par(mar = rep(0, 4)) 
-    plotAA <- function(r, limits, name, units) {
+    plotAA <- function(r, limits, lab, name, units) {
         aa = mean(r) * 12
         plotStandardMap(aa, limits = limits, cols = aa_cols)
         mtext(name, side = 2, adj = 0.9, line = -0.2)
+        addLetLab(lab)
         StandardLegend(aa, limits = limits, cols = aa_cols, units = units, add = TRUE, oneSideLabels = FALSE)
     }
     mapply(plotAA, obs, list(c(0, 1, 2, 5, 10, 20, 50), c(0, 0.1, 0.2, 0.5, 1, 2, 5)),
-           c('Burnt area', 'Fire count'), c('%', 'k~m-2~'))
+           c('b', 'c'), c('Burnt area', 'Fire count'), c('%', 'k~m-2~'))
     
-    mapply(ModalMap, obs, names(files), c(T, F)) 
+    mapply(ModalMap, obs, names(files), c(T, F), c('d', 'g')) 
 
     pc = lapply(obs,PolarConcentrationAndPhase.RasterBrick, phase_units = "months")
 
-    plotConPhase <- function(pc, addLegend = FALSE) {
+    plotConPhase <- function(pc, let, addLegend = FALSE) {
         plotStandardMap(pc[[1]], limits = 0.5:11.5, cols = phase_cols)
+        addLetLab(let[1])
         if (addLegend) SeasonLegend(0.5:11.5, cols = phase_cols, add = FALSE)
         plotStandardMap(pc[[2]], limits = seq(0, 1, 0.1), cols = conc_cols)
+        addLetLab(let[2])
         if (addLegend) StandardLegend(limits = seq(0, 0.9, 0.1), cols = conc_cols, extent_max = FALSE,
                                       max_lab = 1, dat = pc[[2]], add = TRUE, oneSideLabels = FALSE) 
     }
 
-    mapply(plotConPhase, pc, c(TRUE, FALSE))
+    mapply(plotConPhase, pc, list(c('e', 'f'), c('h', 'i')), c(TRUE, FALSE))
     
                    
     plotRegion <- function(region, name, axisMonth) {
@@ -142,7 +148,8 @@ png("figs/fire_var_seasonality.png", height = 250, width = 183, res = 300, units
         return(obsv)
     }
     par(mar = c(0, 0, 3, 1.5))
-    obsv = mapply(plotRegion, regions, names(regions), axisMonth, SIMPLIFY = FALSE)
+    obsv = mapply(plotRegion, regions, paste(c('j', 'k', 'l', 'm'), names(regions), sep = ') '),
+                  axisMonth, SIMPLIFY = FALSE)
     par(mar = c(0, 3, 3, 1.5))
     plot(c(0, 1), c(0,1), type = 'n', axes = FALSE, xlab = '', ylab = '')
     mtext.units("Burnt area (%)", col = "blue", adj = 0, side = 3, line = -2)

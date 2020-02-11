@@ -1,6 +1,7 @@
 source("../gitProjectExtras/gitBasedProjects/R/sourceAllLibs.r")
 sourceAllLibs('../rasterextrafuns/rasterPlotFunctions/R/')
 source("libs/return_multiple_from_functions.r")
+source("libs/addLetLab.r")
 
 library(plotrix)
 library(mapdata)
