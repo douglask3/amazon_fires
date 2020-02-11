@@ -22,7 +22,7 @@ dcols_fc =rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090','#ffffbf','#e0
 limits_tree = c(0, 1, 2, 5, 10, 20, 30)
 cols_tree = c('#ffffe5','#f7fcb9','#d9f0a3','#addd8e','#78c679','#41ab5d','#238443','#006837','#004529')
 
-fireSeason = 11:12
+fireSeason = 9:12
 
 regions = list('Gold Coast/Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
                'Wollemi & Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
@@ -72,7 +72,7 @@ ll = xyFromCell(treeCoverR, 1:length(treeCoverR[]))
 test = ll[,1] > 140 & ll[,2] < -22 & treeCoverR[] > 10
 test[is.na(test)] = FALSE
 treeCoverR[!test] = NaN
-writeRaster.gitInfo(treeCoverR, 'outputs/Australia_region/SE_TempBLRegion.nc', overwrite = TRUE)
+#writeRaster.gitInfo(treeCoverR, 'outputs/Australia_region/SE_TempBLRegion.nc', overwrite = TRUE)
 
 fireCount = brick(fireCount) 
 
@@ -102,19 +102,19 @@ plotVariable <- function(variable, name, limits, cols, dlimits, dcols, units, sc
         StandardLegend(cols_tree, limits_tree, treeCover, 0.9, transpose = TRUE,
                        plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, units = '%', maxLab = 100)
 
-        plotStandardMap(variable_seasons_mean, title2 = '     Average\n   fire season', cols = cols,
+        plotStandardMap(variable_seasons_mean, title2 = '     Average', cols = cols,
                         limits = limits, left_text_adj = 0.1, left_text_adj_line = -1.0)
         StandardLegend(cols, limits, variable_seasons_mean, 0.9, transpose = TRUE,
                        plot_loc = c(0.01, 0.95, 0.2, 0.25), srt =- -90, extend_max = TRUE)
 
         text.units(units, x = 0.33, y = 0.5, srt = 90)
 
-        mapply(plotStandardMap, variable_seasons, title2 = 2002:2019,
+        mapply(plotStandardMap, variable_seasons, title2 = paste(2002:2019, 2003:2020, sep = '/'),
                MoreArgs = list(cols = dcols, limits = dlimits, left_text_adj = 0.1, regions = regions))
 
         StandardLegend(dcols, dlimits, variable_seasons[[1]], 0.9, oneSideLabels = FALSE,
                        extend_min = extend_min, units = units)
-    dev.off.gitWatermark()
+    dev.off()#.gitWatermark()
 }
 variables = lapply(variables, brick)
 
@@ -155,4 +155,4 @@ par(mfrow = c(4, 1), mar = c(0, 4, 1, 4), oma = c(4, 0, 1, 0))
 mapply(plotRegion, regions, names(regions))
 axis(1, at = 2001:2020)
 mtext(side = 1, 'Year', line = 2.5)
-dev.off.gitWatermark()
+dev.off()#.gitWatermark()
