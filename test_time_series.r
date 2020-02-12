@@ -4,13 +4,15 @@ source("libs/make_transparent.r")
 source("libs/plotStandardMap.r")
 source("libs/dev.off.gitInfo.r")
 source("libs/standardGrid.r")
-library(gitBasedProjects)
+#library(gitBasedProjects)
 graphics.off()
 layers = c(5, 95)
 cols = c("tan", "#DDDD00", "red")
 
 dir1 = 'outputs/sampled_posterior_ConFire_solutions-RoSfirecount-Tnorm/'
+dir1 = 'outputs/sampled_posterior_ConFire_solutions-firecount/'
 dir2 = 'constant_post_2018_full_2002_maxMaxT-MaxW-full-Mem_Npr'
+dir2 = 'local_Copy'
 
 error_file = 'fire_summary_precentile.nc'
 uncert_file = 'model_summary.nc'
@@ -30,9 +32,12 @@ control_dens = c(NA, 30, 30, NA, NA)
 
 mnths = 1:228
 
-fire_season = 12
+fire_season = 10:12
 
-fire_seasons = mnths[seq(fire_season, max(mnths), by = 12)]
+cols_years = make_col_vector(c("#161843", "#FFFF00", "#a50026"), ncols = 19)
+
+#fire_seasons = mnths[seq(fire_season, max(mnths), by = 12)]
+fire_seasons = sapply(fire_season, seq, max(mnths), by = 12)
 
 
 temp_file_rs = paste0(c('temp/', dir2, layers), collapse = '-')
@@ -64,20 +69,9 @@ regions = list('SE Aus temperate BL woodland' = 'outputs/Australia_region/SE_Tem
                'Gold Coast, Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
                'Wollemi,  Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
                'Nadgee, Wallagaraugh River' = c(146.25, 148.75, -38.75, -36.25),
-               'Kangaroo Island, Adelaide' = c(136.25, 138.75, -36.25, -33.75))
+               'Kangaroo Island, Adelaide' = c(136.25, 138.75, -36.25, -33.75),
+               'Black Saturday fires region' = c(143.75, 148.75, -38.75, -33.75))
 
-if (file.exists(temp_file) && grab.cache) {
-    load(temp_file) 
-} else {
-    error = openPosts(error_file)
-    uncert = openPosts(uncert_file, varname = "burnt_area")
-    controls = lapply(controls_name, function(i) openPosts(uncert_file, varname = i))
-    save(error, uncert, controls, file = temp_file)
-}
-
-obs = brick(obs)
-p_value = brick(liklihood, varname = "variable")
-liklihood = brick(liklihood, varname = "variable_0")
 
 cropMean <- function(r, extent, nme1, nme2, ...) {
     tfile = paste0(temp_file_rs, nme1, nme2, '.Rd')
@@ -116,22 +110,37 @@ polygonCoords <- function(x, y, col, border = col, maxY = NaN, ...) {
     polygon(c(x, rev(x)), c(y[,1], rev(y[,2])), col = col, border = border, ...)
 }
 
-plotRegion <- function(extent, name, last, plot_control = FALSE) {
-    tFile = paste(temp_file_rs, name, '.Rd')
-    if (file.exists(tFile) && FALSE) {
-        load(tFile) 
-    } else {
-        obs_r      = cropMean(list(obs, obs), extent, name, 'obs')
-        obs_p      = cropMean(list(p_value), extent, name, 'obs_p1')
-        obs_l      = cropMean(list(liklihood), extent, name, 'obs_l')
-        error_r    = cropMean(error, extent, name, 'error')
-        uncert_r   = cropMean(uncert, extent, name, 'uncert')
-        
-        controls_r = mapply(cropMean, controls, nme2 = paste0(controls_name, '-CM'), 
-                            MoreArgs = list(extent = extent, nme1 = name), SIMPLIFY = FALSE)
-        save(obs_r, obs_p, obs_l, error_r, uncert_r, controls_r, file = tFile)
-    }
+addDumbells <- function(x, y, cols) {
+    points(x[,1], y[,1], pch = 19, col = cols_years, xpd = NA)
+    points(x[,2], y[,2], pch = 19, col = cols_years, xpd = NA)
 
+    apply(cbind(x[,], y[,]), 1,
+        function(i) lines(c(i[1], i[2]), c(i[3], i[4]), xpd = NA))
+}
+
+if (file.exists(temp_file) && grab.cache) {
+    load(temp_file) 
+} else {
+    error = openPosts(error_file)
+    uncert = openPosts(uncert_file, varname = "burnt_area")
+    controls = lapply(controls_name, function(i) openPosts(uncert_file, varname = i))
+    save(error, uncert, controls, file = temp_file)
+}
+
+obs = brick(obs)
+p_value = brick(liklihood, varname = "variable")
+liklihood = brick(liklihood, varname = "variable_0")
+
+plotRegion <- function(extent, name, last, plot_control = FALSE) {
+    obs_r      = cropMean(list(obs, obs), extent, name, 'obs')
+    obs_p      = cropMean(list(p_value), extent, name, 'obs_p1')
+    obs_l      = cropMean(list(liklihood), extent, name, 'obs_l')
+    error_r    = cropMean(error, extent, name, 'error')
+    uncert_r   = cropMean(uncert, extent, name, 'uncert')
+    
+    controls_r = mapply(cropMean, controls, nme2 = paste0(controls_name, '-CM'), 
+                        MoreArgs = list(extent = extent, nme1 = name), SIMPLIFY = FALSE)
+    
     par(mar = c(1, 3, 0, 2))  
     if (plot_control) maxY = 1.15  else maxY = max(error_r, uncert_r, obs_r)
     
@@ -149,11 +158,10 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
         polygonCoords(mnths, obs_r, cols[3], lwd = 2)    
 
         labels = seq(0, 1, 0.2)
-        obs_l = (1 + obs_l)*maxY/2
+        obs_l = 1-(1 + obs_l)*maxY/2
 
         lines(mnths, obs_l, col = make.transparent("black", 0.67), lwd = 1.5)
-        #lines(mnths, obs_l, col = make.transparent("black", 1 - obs_p))
-    
+
         test2 = obs_p > 0.99
         test1 = obs_p > 0.95
         points(mnths[test1], obs_l[test1], pch = 19, cex = 2)
@@ -163,30 +171,9 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
     if (name == tail(names(regions), 1)) {
         at = seq(1, max(mnths), by = 12)
         axis(1, at = at, labels = 2001 + round(at/12))
-        if (plot_control) {
-            for (i in 1:5) {
-                legend('topright', controlLeg, density = control_dens,
-                    fill = make.transparent(control_cols, 0.75), border = control_cols,
-                    horiz = TRUE, bty = 'n')
-            }
-        } else {
-            legend('topright', c('Full postirior', 'Parameter uncertainty', 'Observations'),
-                    text.col = cols, horiz = TRUE, bty = 'n', text.font = 2)
-        }
     }
-
-    ratio = apply(uncert_r, 2, function(i) obs_r[,1]/i)[,c(2,1)][fire_seasons,]
-    #polygonCoords(mnths[fire_seasons], ratio fire_seasons,
-    #              make.transparent("black", 0.7), lwd = 2)
-
-    ratioS = ratio + max(ratio)
-    ratioS = cbind(fire_seasons, ratioS * maxY / max(ratioS))
-    arrowFun <- function(x) arrows(x[1], x[2], x[1], x[3], code = 3, angle = 90)
-    #apply(ratioS, 1,  arrowFun)
-    
     
     climScale <- function(r) {
-        
         for (mn in 1:12) {
             index = seq(mn, max(mnths), by = 12)
             r[index,] = r[index,] / mean(r[index,])
@@ -197,10 +184,13 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
         obs_r = climScale(obs_r+0.0001)
         uncert_r = climScale(uncert_r+ 0.0001)
 
-        obs_r = obs_r[fire_seasons,]
-        uncert_r = uncert_r[fire_seasons,]
+        selectSeason <-function(r)  t(apply(fire_seasons, 1, function(i) apply(r[i,], 2, mean)))
+        
+        
+        obs_r = selectSeason(obs_r)
+        uncert_r = selectSeason(uncert_r)
 
-        cols_years = make_col_vector(c("#161843", "#FFFF00", "#a50026"), ncols = 19)
+        
         par(mar = c(3, 0.5, 0, 3))  
         plot(obs_r, uncert_r,
             xlim = range(obs_r,uncert_r, obs_r*1.3), ylim = range(obs_r,uncert_r, obs_r*1.3),
@@ -208,14 +198,8 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
         grid()
         axis(4)
         lines(x = c(0.0001, 9E9), y = c(0.0001,9E9), col = "black", lty = 2)
-    
-    
-        points(obs_r[,1], uncert_r[,1], pch = 19, col = cols_years)
-        points(obs_r[,2], uncert_r[,2], pch = 19, col = cols_years)
-
-        apply(cbind(obs_r[,], uncert_r[,]), 1,
-            function(i) lines(c(i[1], i[2]), c(i[3], i[4])))
-    
+        addDumbells(obs_r, uncert_r, cols_years)
+        
         for (i in c(5, 8, 10, 19)) {
             text(obs_r[i,1], mean(uncert_r[i,], 1), 2000 + i, srt = -90, adj = c(0.5, -0.5))
         }
@@ -223,12 +207,12 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
 }
 
 ploFun <- function(fname, plot_control = FALSE, ...) {
-    png(fname, height = 12, width = 12, res = 300, units = 'in')
-        if (plot_control) lmat = rbind(t(matrix(rep(1:5, each = 2), nrow = 2)), 6)
-            else lmat = rbind(t(matrix(1:10, nrow = 2)), 11)
+    png(fname, height = 10.5, width = 7.5, res = 300, units = 'in')
+        if (plot_control) lmat = rbind(t(matrix(rep(1:7, each = 2), nrow = 2)))
+            else lmat = rbind(t(matrix(1:14, nrow = 2)))
         
         layout(lmat, widths = c(.75, 0.25),
-               heights = c(1, 1, 1, 1, 1, 0.1))
+               heights = c(1, 1, 1, 1, 1, 1, 0.3))
         par(oma = c(3, 1.2, 1, 1.2))
 
         last = c(rep(FALSE, length(regions)-1), TRUE)
@@ -238,14 +222,29 @@ ploFun <- function(fname, plot_control = FALSE, ...) {
         if (plot_control) {
             mtext.units(outer = TRUE, side = 2, 'Standard limitation from controls', line = -1)
             mtext(outer = TRUE, side = 4, 'Rate of spread factor')
+                    
+            plot.new()
+            par(mar = c(1, 0, 1, 0))
+            for (i in 1:5) {
+                legend('center', controlLeg, density = control_dens,
+                    fill = make.transparent(control_cols, 0.75), border = control_cols,
+                    horiz = TRUE, bty = 'n')
+            }
         } else {
             mtext.units(outer = TRUE, side = 2, 'Fire counts (k~m-2~)', line = -1)
             mtext(outer = TRUE, side = 4, 'Modelled anomolie')
             mtext(side = 1, 'Observed anomolie', line = 2.5)
+            
+            
+            par(mar = c(1, 0, 1.5, 0))
+            plot.new()
+            legend('top', c('Full postirior', 'Parameter uncertainty', 'Observations'),
+                    text.col = cols, horiz = TRUE, bty = 'n', text.font = 2, xpd = NA)
+           par(mar = c(1, 0, 1.5, 0))
+            plot(c(0.5, 19.5), c(0, 1), type = 'n', axes = FALSE, xlab = '', ylab = '')
+            addDumbells(cbind(1:19, 1:19), matrix(rep(c(0,1), 19), ncol = 2), cols_years)
+            text(x = seq(1, 19, 6),y = 0,seq(1, 19, 6)+2000, srt = 90, adj = 1.2, xpd = NA)
         }
-
-        par(mar = rep(0, 4))
-        plot(0, axes = FALSE, type = 'n')
     dev.off.gitWatermark()
 }
 
