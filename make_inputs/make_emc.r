@@ -8,7 +8,7 @@ source("make_inputs/fuel_moisture_equilibrium.r")
 source("libs/writeInput.r")
 
 ## paths and parameters
-files = paste0('data/', c('precip.mon.mean.nc', 'rhum.mon.mean.nc', 'air.mon.mean.nc'))
+files = paste0('data/', c('rhum.mon.mean.nc', 'air.mon.mean.nc'))
 mask_file = 'data/climate/climate_mask.nc'
 
 dir_out   = 'outputs/climate/'
@@ -28,14 +28,12 @@ makeData4Start_year <- function(syr) {
 
     dat = lapply(files, loadDat)
     
-
-
     ################################################################################
     ##   make emc                                                                 ##
     ################################################################################
 
     make_emc <- function(i)
-        fuel_moisture_equilibrium(0, dat[[2]][[i]], dat[[3]][[i]])   
+        fuel_moisture_equilibrium(0, dat[[1]][[i]], dat[[2]][[i]])   
 
 
     emc = layer.apply(1:nlayers(dat[[1]]), make_emc)
