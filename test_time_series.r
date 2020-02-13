@@ -4,6 +4,7 @@ source("libs/make_transparent.r")
 source("libs/plotStandardMap.r")
 source("libs/dev.off.gitInfo.r")
 source("libs/standardGrid.r")
+source("libs/YearlySeason.r")
 library(gitBasedProjects)
 graphics.off()
 layers_full = c(1, 99)
@@ -11,7 +12,7 @@ layers_control = c(5, 95)
 cols = c("tan", "#DDDD00", "red")
 
 dir1 = 'outputs/sampled_posterior_ConFire_solutions3-RoSfirecount-Tnorm/'
-dir2 = 'constant_post_2018_full_2002_maxMaxT-MaxW-NewMoist-2020'
+dir2 = 'constant_post_2018_full_2002_maxMaxT-MaxW-NewMoist'
 
 error_file = 'fire_summary_precentile.nc'
 uncert_file = 'model_summary.nc'
@@ -31,13 +32,14 @@ control_dens = c(NA, 30, 30, NA, NA)
 
 mnths = 1:229
 
-fire_season = 10:12
+fire_season = 9:13
 
 cols_years = make_col_vector(c("#161843", "#FFFF00", "#a50026"), ncols = 19)
 
 #fire_seasons = mnths[seq(fire_season, max(mnths), by = 12)]
-fire_seasons = sapply(fire_season, seq, max(mnths), by = 12)
-
+#fire_seasons = sapply(fire_season, seq, max(mnths), by = 12)
+fire_seasons = YearlySeason(fire_season, 229, NULL)
+fire_seasons = t(matrix(unlist(fire_seasons), nrow = length(fire_season)))
 
 temp_file_rs = paste0(c('temp/', dir2, layers_full, layers_control), collapse = '-')
 #temp_file_rs = paste0(c('temp/time_sries_fire_vars-ROS-TMAX-WMAX-full', layers), collapse = '-')
@@ -209,12 +211,12 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
 }
 
 ploFun <- function(fname, plot_control = FALSE, ...) {
-    png(fname, height = 10.5, width = 7.5, res = 300, units = 'in')
-        if (plot_control) lmat = rbind(t(matrix(rep(1:7, each = 2), nrow = 2)))
-            else lmat = rbind(t(matrix(1:14, nrow = 2)))
+    png(fname, height = 9, width = 7.5, res = 300, units = 'in')
+        if (plot_control) lmat = rbind(t(matrix(rep(1:6, each = 2), nrow = 2)))
+            else lmat = rbind(t(matrix(1:12, nrow = 2)))
         
         layout(lmat, widths = c(.75, 0.25),
-               heights = c(1, 1, 1, 1, 1, 1, 0.3))
+               heights = c(1, 1, 1, 1, 1, 0.3))
         par(oma = c(3, 1.2, 1, 1.2))
 
         last = c(rep(FALSE, length(regions)-1), TRUE)

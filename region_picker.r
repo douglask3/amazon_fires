@@ -3,6 +3,7 @@ library(raster)
 library(rasterExtras)
 source("libs/plotStandardMap.r")
 source("libs/standardGrid.r")
+source("libs/YearlySeason.r")
 #library(gitBasedProjects)
 library(ncdf4)
 
@@ -22,7 +23,7 @@ dcols_fc =rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090','#ffffbf','#e0
 limits_tree = c(0, 1, 2, 5, 10, 20, 30)
 cols_tree = c('#ffffe5','#f7fcb9','#d9f0a3','#addd8e','#78c679','#41ab5d','#238443','#006837','#004529')
 
-fireSeason = 9:12
+fireSeason = 9:13
 
 regions = list('Gold Coast/Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
                'Wollemi & Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
@@ -30,8 +31,9 @@ regions = list('Gold Coast/Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
                'Kangaroo Island/Adelaide' = c(136.25, 138.75, -36.25, -33.75)) 
 
 variables = paste0("outputs/Australia_region/climate/from_2001/",
-                   c( "emc-2001-2019.nc", "precip2001-2019.nc", "rhumMaxMax.2001-2019.nc", "soilw.0-10cm.gauss.2001-2019.nc", "precip_yrLag.2001-2019.nc"))
-vnames     = c("emc", "precip", "rh", "soilw", "precip12")
+                   c("emc-2001-2020.nc", "precip-2001-2020.nc", "rhumMaxMax.2001-2020.nc",
+                     "soilw.0-10cm.gauss.2001-2020.nc", "wetdays-2001-2020.nc"))
+vnames     = c("emc", "precip", "rh", "soilw", "wetdays")
 units = c("%", "mm ~yr-1~", "%", "%", "%")
 
 line_cols = c("purple", "blue", "grey", "green", "blue")
@@ -64,7 +66,8 @@ scaling = c(100, 1, 1, 100, 100)
                     
                     
                    
-fireSeasons = lapply(2:19, function(i) (i-1) * 12 + fireSeason)
+#fireSeasons = lapply(2:19, function(i) (i-1) * 12 + fireSeason)
+fireSeasons = YearlySeason(fireSeason, 229, NULL)[-1]
 
 treeCover = mean(brick(treeCover))  * 100
 treeCoverR = treeCover
