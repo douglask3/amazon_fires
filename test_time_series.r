@@ -11,7 +11,7 @@ layers_control = c(5, 95)
 cols = c("tan", "#DDDD00", "red")
 
 dir1 = 'outputs/sampled_posterior_ConFire_solutions3-RoSfirecount-Tnorm/'
-dir2 = 'constant_post_2018_full_2002_maxMaxT-MaxW-NewMoist'
+dir2 = 'constant_post_2018_full_2002_maxMaxT-MaxW-NewMoist-2020'
 
 error_file = 'fire_summary_precentile.nc'
 uncert_file = 'model_summary.nc'
@@ -29,7 +29,7 @@ control_cols = make.transparent(c("#4d9221", "#053061", "#67001f", "#c51b7d", "b
 control_cols[4] = make.transparent(control_cols[4], 0.5)
 control_dens = c(NA, 30, 30, NA, NA)
 
-mnths = 1:228
+mnths = 1:229
 
 fire_season = 10:12
 
@@ -66,10 +66,9 @@ regions = list('Gold Coast, Northern Rivers' = c(151.25, 153.75, -31.25, -26.75)
 
 regions = list('SE Aus temperate BL woodland' = 'outputs/Australia_region/SE_TempBLRegion.nc',
                'Gold Coast, Northern Rivers' = c(151.25, 153.75, -31.25, -26.75),
-               'Wollemi,  Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
-               'Nadgee, Wallagaraugh River' = c(146.25, 148.75, -38.75, -36.25),
-               'Kangaroo Island, Adelaide' = c(136.25, 138.75, -36.25, -33.75),
-               'Black Saturday fires region' = c(143.75, 148.75, -38.75, -33.75))
+               'Wollemi, Blue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
+               'East Gippsland' = c(146.25, 148.75, -38.75, -36.25),
+               'Kangaroo Island, Adelaide' = c(136.25, 138.75, -36.25, -33.75))
 
 
 cropMean <- function(r, extent, nme1, nme2, ...) {
@@ -78,19 +77,19 @@ cropMean <- function(r, extent, nme1, nme2, ...) {
         load(tfile)
     } else {
         cropMeani <- function(ri) {
-            if (is.character(extent)) {#
+            if (is.character(extent)) {#                
                 r0 = ri
                 mask = is.na(raster(extent) )
-                ri[mask] = 0
+                ri[mask] = NaN
                 
             } else {
                 ri = crop(ri, extent(extent, ...))                
             }
-            ri[ri>9E9] = 0
-            ri[is.na(ri)] = 0 
-            ri[ri<0] = 0
+            ri[ri>9E9] = NaN
+            ri[is.na(ri)] = NaN 
+            ri[ri<0] = NaN
             
-            unlist(layer.apply(ri, mean.raster))
+            unlist(layer.apply(ri, mean.raster, na.rm = TRUE))
         }
         r = sapply(r, cropMeani)     
         save(r, file = tfile)
@@ -106,6 +105,7 @@ polygonCoords <- function(x, y, col, border = col, maxY = NaN, ...) {
         axis(4, at = labels * maxY/max(y), labels = labels)
         y = maxY * y/max(y)
     }
+    y = y[1:length(x),]
     polygon(c(x, rev(x)), c(y[,1], rev(y[,2])), col = col, border = border, ...)
 }
 
@@ -132,9 +132,10 @@ p_value = brick(liklihood, varname = "variable")
 liklihood = brick(liklihood, varname = "variable_0")
 
 plotRegion <- function(extent, name, last, plot_control = FALSE) {
+    obs_l      = cropMean(list(liklihood), extent, name, 'obs_l2')
     obs_r      = cropMean(list(obs, obs), extent, name, 'obs')
     obs_p      = cropMean(list(p_value), extent, name, 'obs_p1')
-    obs_l      = cropMean(list(liklihood), extent, name, 'obs_l')
+    
     error_r    = cropMean(error, extent, name, 'error')
     uncert_r   = cropMean(uncert, extent, name, 'uncert')
     
@@ -158,8 +159,9 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
         polygonCoords(mnths, obs_r, cols[3], lwd = 2)    
 
         labels = seq(0, 1, 0.2)
-        obs_l = 1-(1 + obs_l)*maxY/2
-
+        obs_l0 = obs_l
+        obs_l = (1 + (1-obs_l))*maxY/2
+        
         lines(mnths, obs_l, col = make.transparent("black", 0.67), lwd = 1.5)
 
         test2 = obs_p > 0.99
