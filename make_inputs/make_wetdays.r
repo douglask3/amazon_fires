@@ -26,12 +26,12 @@ files = list.files(dir, full.names = TRUE)
 
 findMnthWD <- function(mn, dat, mnths) {
     print(mn)
-    mean(dat[[which(mn == mnths)]] >= 2.8)
+    mean(dat[[which(mn == mnths)]] >= 2.8, na.rm =  TRUE)
 }
 
 findMnthPR <- function(mn, dat, mnths) {
     print(mn)
-    mean(dat[[which(mn == mnths)]])
+    mean(dat[[which(mn == mnths)]], na.rm =  TRUE)
 }
 mask = raster(mask_file)
 makeData4Start_year <- function(syr) {
