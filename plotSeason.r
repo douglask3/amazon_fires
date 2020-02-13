@@ -2,6 +2,7 @@ source("libs/PolarConcentrationAndPhase.r")
 source("libs/polarPlot.r")
 source("libs/plotStandardMap.r")
 source("libs/SeasonLegend.r")
+source("libs/YearlySeason.r")
 library(raster)
 library(rasterExtras)
 source("../gitProjectExtras/gitBasedProjects/R/sourceAllLibs.r")
@@ -9,25 +10,14 @@ sourceAllLibs("../rasterextrafuns/rasterPlotFunctions/R/")
 graphics.off()
 
 global_extent = extent(c(112, 155, -44, -10))
-#regions = list(tS = c(-180, 180, -60, -30), 
-#               TS = c(-180, 180, -30, 0),
-#               TN = c(-180, 180, 0, 30),
-#               tN = c(-180, 180, 30, 60),
-#               BN = c(-180, 180, 60, 90))
 
 files = c("Burnt Area" = "outputs/Australia_region/burnt_area-GFED4s_2.5degree_2001-2016.nc",
           "Fire Count" = "outputs/Australia_region/firecount-SE_Aus_2001_onwards.nc")
-
-regions = list(NorthWestAus = c(110, 140, -27.5, -10),
-               SouthWestAus = c(110, 125, -37.5, -27.5),
-               NorthEastAus = c(142, 154, -26, -10),
-               SouthEastAus = c(142, 154, -39, -31))
                
 regions = list('Gold Coast,\nNorthern Rivers' = c(151.25, 153.75, -31.25, -26.75),
                'Wollemi,\nBlue Mountains NPs' = c(148.75, 151.25, -36.25, -31.25),
                'East\nGippsland' = c(146.25, 148.75, -38.75, -36.25),
                'Kangaroo\nIsland, Adelaide' = c(136.25, 138.75, -36.25, -33.75))
-
               
 axisMonth = c(2, 6, 4, 8)
 reds9   = c("#FFFBF7", "#F7EBDE", "#EFDBC6", "#E1CA9E", "#D6AE6B", 
@@ -68,21 +58,10 @@ ModalMap <- function(obs, txt, addLegend, let) {
                        labelss = modal_limits, add = TRUE) 
 }
 
-YealySeason <- function(season, r, FUN = 'sum') {
-    nyears = ceiling(nlayers(r)/12)
-    seasons = lapply(1:nyears, function(i) season + (i-1) * 12)    
-    test = sapply(seasons, function(i) all(i < nlayers(r)))
-    seasons = seasons[test]
-    if (is.null(FUN)) return(seasons)
-    if (FUN == "sum") out = layer.apply(seasons, function(i) sum(r[[i]]))
-    else out = layer.apply(seasons, function(i) FUN(r[[i]]))
-    return(out)
-}
-
 srank.raster <- function(r1, r2, lab = '', name = '',season = NULL) {
     if(!is.null(season)) {
-        r1 = YealySeason(season, r1)
-        r2 = YealySeason(season, r2)
+        r1 = YearlySeason(season, r1)
+        r2 = YearlySeason(season, r2)
     }
     mask = !any(is.na(r1+r2))
     srank.cell <- function(v1, v2) 
