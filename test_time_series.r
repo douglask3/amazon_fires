@@ -4,15 +4,14 @@ source("libs/make_transparent.r")
 source("libs/plotStandardMap.r")
 source("libs/dev.off.gitInfo.r")
 source("libs/standardGrid.r")
-#library(gitBasedProjects)
+library(gitBasedProjects)
 graphics.off()
-layers = c(5, 95)
+layers_full = c(1, 99)
+layers_control = c(5, 95)
 cols = c("tan", "#DDDD00", "red")
 
-dir1 = 'outputs/sampled_posterior_ConFire_solutions-RoSfirecount-Tnorm/'
-dir1 = 'outputs/sampled_posterior_ConFire_solutions-firecount/'
-dir2 = 'constant_post_2018_full_2002_maxMaxT-MaxW-full-Mem_Npr'
-dir2 = 'local_Copy'
+dir1 = 'outputs/sampled_posterior_ConFire_solutions3-RoSfirecount-Tnorm/'
+dir2 = 'constant_post_2018_full_2002_maxMaxT-MaxW-NewMoist'
 
 error_file = 'fire_summary_precentile.nc'
 uncert_file = 'model_summary.nc'
@@ -40,7 +39,7 @@ cols_years = make_col_vector(c("#161843", "#FFFF00", "#a50026"), ncols = 19)
 fire_seasons = sapply(fire_season, seq, max(mnths), by = 12)
 
 
-temp_file_rs = paste0(c('temp/', dir2, layers), collapse = '-')
+temp_file_rs = paste0(c('temp/', dir2, layers_full, layers_control), collapse = '-')
 #temp_file_rs = paste0(c('temp/time_sries_fire_vars-ROS-TMAX-WMAX-full', layers), collapse = '-')
 temp_file = paste0(temp_file_rs, '-Open.Rd')
 
@@ -57,7 +56,7 @@ openPost <- function(mnth, file, layer, ...) {
     brick(file, level = mnth, ...)[[layer]]
 }
 
-openPosts <- function(file, ...)
+openPosts <- function(file, layers, ...)
     lapply(layers, function(i) layer.apply(mnths, openPost, file, i, ...))
 
 
@@ -121,9 +120,10 @@ addDumbells <- function(x, y, cols) {
 if (file.exists(temp_file) && grab.cache) {
     load(temp_file) 
 } else {
-    error = openPosts(error_file)
-    uncert = openPosts(uncert_file, varname = "burnt_area")
-    controls = lapply(controls_name, function(i) openPosts(uncert_file, varname = i))
+    error = openPosts(error_file, layers_full)
+    uncert = openPosts(uncert_file, layers_full, varname = "burnt_area")
+    controls = lapply(controls_name, function(i) openPosts(uncert_file, layers_control,
+                                                           varname = i))
     save(error, uncert, controls, file = temp_file)
 }
 

@@ -8,45 +8,55 @@ source("make_inputs/fuel_moisture_equilibrium.r")
 source("libs/writeInput.r")
 
 ## paths and parameters
-files = paste0('data/', c('rhum.mon.mean.nc', 'air.mon.mean.nc'))
+dir = 'data/precip_daily/'
 mask_file = 'data/climate/climate_mask.nc'
 
 dir_out   = 'outputs/climate/'
-fname_out = 'emc-'
+fname_out = c('wetdays-', 'precip-')
 
-Start_yr = c(2001,1948)
+Start_yr = c(2001,1979)
+
+subArea = extent(c(100, 170, -50, 0))
 
 ################################################################################
 ## load data                                                                  ##
 ################################################################################
+
+files = list.files(dir, full.names = TRUE)
+
+findMnthWD <- function(mn, dat, mnths) {
+    print(mn)
+    mean(dat[[which(mn == mnths)]] >= 2.8)
+}
+
+findMnthPR <- function(mn, dat, mnths) {
+    print(mn)
+    mean(dat[[which(mn == mnths)]])
+}
+mask = raster(mask_file)
 makeData4Start_year <- function(syr) {
-    loadDat <- function(file) {
+    findVar <- function(file, vFUN = findMnthWD) {
         dat = brick(file)
-        index =  which(sapply(strsplit(names(dat), '.', fixed = TRUE), substr, 2, 5)[1,] >= syr)
-        return(dat[[index]])
+        dat = raster::crop(dat, subArea)
+        mnths = sapply(names(dat), function(i) strsplit(i, '.', fixed = TRUE)[[1]][2])
+        
+        out = layer.apply(unique(mnths), vFUN, dat, mnths)
+        out = raster::resample(out, mask)
+        return(out)
     }
+    years = sapply(files, function(i) tail(strsplit(i, '.', fixed = TRUE)[[1]],2)[1])
+    test = years >= syr
+    files = files[test]; years = years[test]
 
-    dat = lapply(files, loadDat)
-    
-    ################################################################################
-    ##   make emc                                                                 ##
-    ################################################################################
+    wd = layer.apply(files, findVar)
+    pr = layer.apply(files, findVar, vFUN = findMnthPR)
 
-    make_emc <- function(i)
-        fuel_moisture_equilibrium(0, dat[[1]][[i]], dat[[2]][[i]])   
-
-
-    emc = layer.apply(1:nlayers(dat[[1]]), make_emc)
-    mask = raster(mask_file)
-
-    emc = raster::resample(emc, mask)
     ################################################################################
     ## output                                                                     ##
     ################################################################################
-    years =  sapply(strsplit(names(dat[[1]]), '.', fixed = TRUE), substr, 2, 5)[1,]
     
-    writeInput(emc, dir_out, fname_out, years)
-    
+    writeInput(wd, dir_out, fname_out[1], years)
+    writeInput(pr, dir_out, fname_out[2], years)
 }#
 
 lapply(Start_yr, makeData4Start_year)
