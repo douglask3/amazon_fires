@@ -64,7 +64,7 @@ ModalMap <- function(obs, txt, addLegend, let) {
     mtext(txt, side = 2)
     if (addLegend) 
         StandardLegend(limits = modal_limits - 1, cols = modal_cols, dat = modal_approx-1,
-                       extent_max = TRUE,
+                       extend_max = TRUE,
                        labelss = modal_limits, add = TRUE) 
 }
 
@@ -92,10 +92,11 @@ srank.raster <- function(r1, r2, lab = '', name = '',season = NULL) {
     out[mask] = mapply(srank.cell, as.data.frame(t(r1[mask])), as.data.frame(t(r2[mask])))
     out[!mask] = NaN
     
-    plotStandardMap(srank.month, limits = limits_rank, cols = cols_rank)
+    plotStandardMap(out, limits = limits_rank, cols = cols_rank)
     mtext(name, side = 2, adj = 0.9, line = -0.2)
     addLetLab(lab)
-    StandardLegend(aa, limits = limits_rank, cols = cols_rank,add = TRUE, oneSideLabels = FALSE)
+    StandardLegend(out, limits = limits_rank, cols = cols_rank,
+                   extend_max = FALSE, maxLab = 1, add = TRUE, oneSideLabels = FALSE)
     return(out)
 }
 
@@ -149,8 +150,8 @@ png("figs/fire_var_seasonality.png", height = 300, width = 183, res = 300, units
         if (addLegend) SeasonLegend(0.5:11.5, cols = phase_cols, add = FALSE)
         plotStandardMap(pc[[2]], limits = seq(0, 1, 0.1), cols = conc_cols)
         addLetLab(let[2])
-        if (addLegend) StandardLegend(limits = seq(0, 0.9, 0.1), cols = conc_cols, extent_max = FALSE,
-                                      max_lab = 1, dat = pc[[2]], add = TRUE, oneSideLabels = FALSE) 
+        if (addLegend) StandardLegend(limits = seq(0, 0.9, 0.1), cols = conc_cols, extend_max = FALSE,
+                                      maxLab = 1, dat = pc[[2]], add = TRUE, oneSideLabels = FALSE) 
     }
 
     mapply(plotConPhase, pc, list(c('e', 'f'), c('h', 'i')), c(TRUE, FALSE))
