@@ -6,8 +6,10 @@ source("libs/addLetLab.r")
 library(plotrix)
 library(mapdata)
 library(mapplots)
+library(rgdal)
 
-aus_ste <- readOGR(dsn = "data/state_shape/STE11aAust.shp")
+#aus_ste <- readOGR(dsn = "data/state_shape/STE11aAust.shp")
+aus_ste <- readOGR(dsn = "data/state_shape", layer = "STE11aAust")
 
 StandardLegend <- function(cols, limits, dat, rightx = 0.95, extend_max = TRUE, oneSideLabels = TRUE, transpose = FALSE,
                            plot_loc = NULL, srt = 0, add = FALSE, ...) {
