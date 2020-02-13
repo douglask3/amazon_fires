@@ -252,4 +252,3 @@ ploFun <- function(fname, plot_control = FALSE, ...) {
 
 ploFun(paste0(fname, '.png'))
 ploFun(paste0(fname, '-controls.png'), plot_control = TRUE)
-

@@ -37,13 +37,15 @@ aa_cols = c('#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c
 phase_cols = c('#ffff00','#313695', '#a50026', '#ffff00')
 conc_cols = c('#ffffd9','#edf8b1','#c7e9b4','#7fcdbb','#41b6c4','#1d91c0','#225ea8','#253494','#081d58')
 
-
 modal_cols = c('#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1','#dd3497','#ae017e','#7a0177','#49006a')#c('#34eeba','#d95f02','#7570b3')
 modal_limits = c(1, 1.1, 1.2, 1.5, 2)
 
+limits_rank = seq(0, 0.9, 0.1)
+cols_rank = c('#ffffe5','#f7fcb9','#d9f0a3','#addd8e','#78c679','#41ab5d','#238443','#006837','#004529')
+
 obs = lapply(files, brick)
 mxLayers = min(sapply(obs, nlayers))
-obs = lapply(obs, function(i) i[[1:mxLayers]])
+obs = obs_ia =lapply(obs, function(i) i[[1:mxLayers]])
 
 convert2Climatology <- function(r) 
     layer.apply(1:12, function(mn) mean(r[[seq(mn, nlayers(r), by = 12)]]))
@@ -62,15 +64,47 @@ ModalMap <- function(obs, txt, addLegend, let) {
     mtext(txt, side = 2)
     if (addLegend) 
         StandardLegend(limits = modal_limits - 1, cols = modal_cols, dat = modal_approx-1,
-                       extent_max = TRUE,
+                       extend_max = TRUE,
                        labelss = modal_limits, add = TRUE) 
 }
 
-png("figs/fire_var_seasonality.png", height = 270, width = 183, res = 300, units = 'mm')
+YealySeason <- function(season, r, FUN = 'sum') {
+    nyears = ceiling(nlayers(r)/12)
+    seasons = lapply(1:nyears, function(i) season + (i-1) * 12)    
+    test = sapply(seasons, function(i) all(i < nlayers(r)))
+    seasons = seasons[test]
+    if (is.null(FUN)) return(seasons)
+    if (FUN == "sum") out = layer.apply(seasons, function(i) sum(r[[i]]))
+    else out = layer.apply(seasons, function(i) FUN(r[[i]]))
+    return(out)
+}
+
+srank.raster <- function(r1, r2, lab = '', name = '',season = NULL) {
+    if(!is.null(season)) {
+        r1 = YealySeason(season, r1)
+        r2 = YealySeason(season, r2)
+    }
+    mask = !any(is.na(r1+r2))
+    srank.cell <- function(v1, v2) 
+         cor.test(v1, v2, method = "spearman")[[4]]
+    
+    out = r1[[1]]
+    out[mask] = mapply(srank.cell, as.data.frame(t(r1[mask])), as.data.frame(t(r2[mask])))
+    out[!mask] = NaN
+    
+    plotStandardMap(out, limits = limits_rank, cols = cols_rank)
+    mtext(name, side = 2, adj = 0.9, line = -0.2)
+    addLetLab(lab)
+    StandardLegend(out, limits = limits_rank, cols = cols_rank,
+                   extend_max = FALSE, maxLab = 1, add = TRUE, oneSideLabels = FALSE)
+    return(out)
+}
+
+png("figs/fire_var_seasonality.png", height = 300, width = 183, res = 300, units = 'mm')
     par(oma = c(1, 2, 1, 0))
     layout(rbind(cbind(c(1, 4, 4, 5, 5), c(2, 6, 6, 9, 9), c(2, 6, 7, 7, 9), c(2, 6, 6, 9, 9), c(3, 8, 8, 10, 10)),
-                 rbind(c(11, 12, 12, 12, 13), c(14, 15, 15, 15, 16))),
-           heights = c(1, 0.68, 0.32, 0.50, 0.5, 1.3, 1.3), width = c(1, 0.15, 0.3, 0.55, 1))
+                 rbind(c(11, 12, 12, 12, 0), c(13, 14, 14, 14, 15), c(16, 17, 17, 17, 18))),
+           heights = c(1, 0.68, 0.32, 0.50, 0.5, 1, 1.3, 1.3), width = c(1, 0.15, 0.3, 0.55, 1))
     
     mask = !any(is.na(obs[[1]]+obs[[2]]))
     x0 = as.vector(obs[[1]][mask]); y0 = as.vector(obs[[2]][mask])
@@ -116,12 +150,15 @@ png("figs/fire_var_seasonality.png", height = 270, width = 183, res = 300, units
         if (addLegend) SeasonLegend(0.5:11.5, cols = phase_cols, add = FALSE)
         plotStandardMap(pc[[2]], limits = seq(0, 1, 0.1), cols = conc_cols)
         addLetLab(let[2])
-        if (addLegend) StandardLegend(limits = seq(0, 0.9, 0.1), cols = conc_cols, extent_max = FALSE,
-                                      max_lab = 1, dat = pc[[2]], add = TRUE, oneSideLabels = FALSE) 
+        if (addLegend) StandardLegend(limits = seq(0, 0.9, 0.1), cols = conc_cols, extend_max = FALSE,
+                                      maxLab = 1, dat = pc[[2]], add = TRUE, oneSideLabels = FALSE) 
     }
 
     mapply(plotConPhase, pc, list(c('e', 'f'), c('h', 'i')), c(TRUE, FALSE))
     
+    srank.month = srank.raster(obs_ia[[1]], obs_ia[[2]], 'j', 'monthly rank')
+    srank.annual = srank.raster(obs_ia[[1]], obs_ia[[2]], 'k', 'annual rank', season = 8:13)
+
                    
     plotRegion <- function(region, name, axisMonth) {
         obs = lapply(obs, raster::crop, extent(region))
@@ -148,10 +185,11 @@ png("figs/fire_var_seasonality.png", height = 270, width = 183, res = 300, units
         return(obsv)
     }
     par(mar = c(0, 0, 3, 1.5))
-    obsv = mapply(plotRegion, regions, paste(c('j', 'k', 'l', 'm'), names(regions), sep = ') '),
+    obsv = mapply(plotRegion, regions, paste(c('l', 'm', 'n', 'o'), names(regions), sep = ') '),
                   axisMonth, SIMPLIFY = FALSE)
-    par(mar = c(0, 3, 3, 1.5))
+    par(mar = c(2, 3, 2, 0))
     plot(c(0, 1), c(0,1), type = 'n', axes = FALSE, xlab = '', ylab = '')
     mtext.units("Burnt area (%)", col = "blue", adj = 0, side = 3, line = -2)
-    mtext.units("Fire count (k~m-2~)", col = "red", adj = 0, side = 3, line = -4)
+    mtext.units("Fire count (k~m-2~)", col = "red", adj = 0, side = 3, line = -3.8)
+
 dev.off()

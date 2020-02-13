@@ -18,7 +18,7 @@ StandardLegend <- function(cols, limits, dat, rightx = 0.95, extend_max = TRUE, 
         if(add) plot_loc = c(0.02, 0.6, 0.1, 0.13)
         else plot_loc = c(0.01, rightx, 0.3, 0.56)
     }
-                           
+                          
     add_raster_legend2(cols, limits, dat = dat, add = add,
                        transpose = transpose, srt = srt, oneSideLabels= oneSideLabels,
                        plot_loc = plot_loc,
