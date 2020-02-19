@@ -11,8 +11,8 @@ layers_full = c(1, 99)
 layers_control = c(5, 95)
 cols = c("tan", "#DDDD00", "red")
 
-dir1 = 'outputs/sampled_posterior_ConFire_solutions3-RoSfirecount-Tnorm/'
-dir2 = 'constant_post_2018_full_2002_maxMaxT-MaxW-NewMoist'
+dir1 = 'outputs/sampled_posterior_ConFire_solutions5-RoSfirecount-Tnorm/'
+dir2 = 'constant_post_2018_full_2002_maxMaxT-MaxW-NewMoist-WD-ROS2-2020-long'
 
 error_file = 'fire_summary_precentile.nc'
 uncert_file = 'model_summary.nc'
@@ -20,10 +20,8 @@ liklihood = 'fire_summary_observed_liklihood.nc'
 
 obs = "outputs/Australia_region/firecount-SE_Aus_2001_onwards.nc"
 
-
-
 controls_name = c("standard_fuel", "standard_moisture", "standard_ignitions",
-                  "standard_suppression", "variable")
+                  "standard_suppression", "standard_rate_of_spread")
 
 controlLeg = c("Fuel", "Moisture", "Ignitions", "Suppression", "Rate of Spread")
 control_cols = make.transparent(c("#4d9221", "#053061", "#67001f", "#c51b7d", "black"), 0.5)
@@ -51,7 +49,7 @@ liklihood =paste(dir1, dir2,  'fire_summary_observed_liklihood.nc', sep = '/')
 
 fname = paste0("figs/time_series-", dir2, '.png')
 
-grab.cache = TRUE
+grab.cache = FALSE
 
 openPost <- function(mnth, file, layer, ...) {
     print(mnth)
@@ -122,10 +120,13 @@ addDumbells <- function(x, y, cols) {
 if (file.exists(temp_file) && grab.cache) {
     load(temp_file) 
 } else {
-    error = openPosts(error_file, layers_full)
-    uncert = openPosts(uncert_file, layers_full, varname = "burnt_area")
+    
     controls = lapply(controls_name, function(i) openPosts(uncert_file, layers_control,
                                                            varname = i))
+    
+    error = openPosts(error_file, layers_full)
+     
+    uncert = openPosts(uncert_file, layers_full, varname = "burnt_area")
     save(error, uncert, controls, file = temp_file)
 }
 
@@ -185,8 +186,8 @@ plotRegion <- function(extent, name, last, plot_control = FALSE) {
         r
     }   
     if (!plot_control) {
-        obs_r = climScale(obs_r+0.0001)
-        uncert_r = climScale(uncert_r+ 0.0001)
+        obs_r = climScale(obs_r+0.001)
+        uncert_r = climScale(uncert_r+ 0.001)
 
         selectSeason <-function(r)  t(apply(fire_seasons, 1, function(i) apply(r[i,], 2, mean)))
         
