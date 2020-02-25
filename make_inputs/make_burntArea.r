@@ -2,6 +2,7 @@
 ## cfg                                                                        ##
 ################################################################################
 ## Libraries etc
+library(rasterExtras)
 library(raster)
 source("libs/convert_pacific_centric_2_regular.r")
 library(rhdf5)
@@ -25,13 +26,17 @@ openHDFandConvert2Nc <- function(month, fname) {
     layer = paste('burned_area', month, 'burned_fraction', sep = '/')
     dat = h5read(fname, layer)
     dat = raster(t(dat))
-
+    
     extent(dat) = extent(c(-180, 180, -90, 90))
     dat = convert_regular_2_pacific_centric(dat)
-    dat = raster::resample(dat, mask)
-   
+    
+    maskHR = disaggregate(mask, 10)
+    dat = raster::resample(dat, maskHR)
+    dat = aggregate(dat, 10)
+    
+    dat = raster::resample(dat, mask)       
     H5close()
-	
+
     writeRaster(dat, file = memSafeFile(), overwrite = TRUE)
     
     fDate = file.info(fname)$ctime
