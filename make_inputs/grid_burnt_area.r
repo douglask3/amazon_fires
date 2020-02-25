@@ -12,9 +12,10 @@ out = mask
 out[] = 0
 regridLayer <- function(r) {
     tempFile = paste("temp/", "MCD64A1.006", names(r), ".nc", sep = "_")
+    print(tempFile)
     if (file.exists(tempFile)) return(raster(tempFile))
+
     regridByXY <- function(x, y, area = FALSE) {
-        print(x)
         ri = crop(r, extent(x, y))
 
         aggRes <- function(rj) {
