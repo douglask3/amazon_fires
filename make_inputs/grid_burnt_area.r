@@ -11,26 +11,27 @@ ncuts = 5
 mask = raster('data/climate/climate_mask.nc')
 mask = convert_pacific_centric_2_regular(mask)
 
+muliCore = FALSE
 
-regridLayer <- function(r, xcut, ycut, mask) {
+regridLayer <- function(r, xcut, ycut, mask) {   
     
     if (is.list(r)) {
         r = r[[1]]
         library("raster")
         library(rasterExtras)
         source("libs/convert_pacific_centric_2_regular.r")
-    }
-    fileConn =  file(paste0("debugging/debug-", names(r), ".txt"))
+    }    
+    tempFile = paste("temp/", "xMCD64A1.006", names(r), ".nc", sep = "_") 
+    if (file.exists(tempFile)) return(raster(tempFile))
+     
+    fileConn = paste0("debugging/debug-", names(r), ".txt")
+    #if (file.exists(fileConn)) return(NULL)
+    
+    fileConn =  file(fileConn)
     writeLines("configing", fileConn)
 
     out = mask
     out[] = 0
-
-    tempFile = paste("temp/", "xMCD64A1.006", names(r), ".nc", sep = "_")
-    #print(tempFile)
-    if (file.exists(tempFile)) return(raster(tempFile))
-
-    
 
     regridByXY <- function(x, y, area = FALSE) {
         writeLines(paste(c(x, y), collpase = '-'), fileConn)
@@ -72,7 +73,7 @@ regridLayer <- function(r, xcut, ycut, mask) {
     writeLines("masking", fileConn)
     BA[AR == 0] = NaN
     writeLines("outputting", fileConn)
-    BA = writeRaster(BA, file = tempFile)
+    BA = writeRaster(BA, file = tempFile, overwrite = TRUE)
     
     return(BA)
 }
@@ -89,11 +90,13 @@ xcut = cutCords(1:2, xFromCol(dat, 1:ncol(dat)))
 ycut = cutCords(3:4, yFromRow(dat, 1:nrow(dat)))
 
 #browser()
-cl = makeSOCKcluster(rep("localhost", 6))
-    #lapply(layer.apply(dat[[36:nlayers(dat)]], function(i) c(i)),
-#               regridLayer, xcut = xcut, ycut = ycut, mask = mask)
-    parLapply(cl, layer.apply(dat, function(i) c(i)),
-                   regridLayer, xcut = xcut, ycut = ycut, mask = mask)
-stopCluster(cl)
-
-out = layer.apply(dat, regridLayer)
+if (muliCore) {
+    cl = makeSOCKcluster(rep("localhost", 4))
+        #lapply(layer.apply(dat, function(i) c(i)),
+        #           regridLayer, xcut = xcut, ycut = ycut, mask = mask)
+        parLapply(cl, layer.apply(dat, function(i) c(i)),
+                  regridLayer, xcut = xcut, ycut = ycut, mask = mask)
+    stopCluster(cl)
+}
+out = layer.apply(dat, regridLayer, xcut = xcut, ycut = ycut, mask = mask)
+out = writeRaster.Standard(out, file = 'outputs/fire_counts/burnt_area_MCD64A1.006.nc')
