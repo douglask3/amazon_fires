@@ -1,28 +1,48 @@
 library("raster")
 library(rasterExtras)
 source("libs/convert_pacific_centric_2_regular.r")
+library(snow)
+library(ncdf4)
+source("libs/writeRaster.Standard.r")
 
 dat = brick('data/MCD64A1.006_500m_aid0001.nc')
-ncuts = 10
+ncuts = 5
 
 mask = raster('data/climate/climate_mask.nc')
 mask = convert_pacific_centric_2_regular(mask)
 
-out = mask
-out[] = 0
-regridLayer <- function(r) {
-    tempFile = paste("temp/", "MCD64A1.006", names(r), ".nc", sep = "_")
-    print(tempFile)
+
+regridLayer <- function(r, xcut, ycut, mask) {
+    
+    if (is.list(r)) {
+        r = r[[1]]
+        library("raster")
+        library(rasterExtras)
+        source("libs/convert_pacific_centric_2_regular.r")
+    }
+    fileConn =  file(paste0("debugging/debug-", names(r), ".txt"))
+    writeLines("configing", fileConn)
+
+    out = mask
+    out[] = 0
+
+    tempFile = paste("temp/", "xMCD64A1.006", names(r), ".nc", sep = "_")
+    #print(tempFile)
     if (file.exists(tempFile)) return(raster(tempFile))
 
-    regridByXY <- function(x, y, area = FALSE) {
-        ri = crop(r, extent(x, y))
+    
 
+    regridByXY <- function(x, y, area = FALSE) {
+        writeLines(paste(c(x, y), collpase = '-'), fileConn)
+        
+        ri = crop(r, extent(x, y))
+        maski = disaggregate(crop(mask, extent(x, y)), 600)
         aggRes <- function(rj) {
-            rj = aggregate(rj, 200)
+            rj = raster::resample(rj, maski)
+            rj = aggregate(rj, 600)
             rj = raster::resample(rj, mask)
         }
-    
+        
         if (area) ri[ri >= 0] = 1 else ri[ri >0 ] = 1
         ri[ri < 0] = 0   
         
@@ -31,8 +51,10 @@ regridLayer <- function(r) {
         ri[ri<0] = 0
         return(ri)
     }  
+    
+    
     gridDat <- function(...)
-        lapply(ycut, function(y) lapply(xcut, regridByXY, y, ...))
+        lapply(ycut, function(yi) lapply(xcut, regridByXY, yi, ...))
     plates = gridDat()
     areas  = gridDat(area = TRUE)
     
@@ -41,11 +63,17 @@ regridLayer <- function(r) {
         for (px in r) for (py in px) out = out + py
         return(out)
     }
+    writeLines("Adding BA", fileConn)
     BA = addUp(plates)
+    writeLines("Adding AR", fileConn)
     AR = addUp(areas)
+    writeLines("Normalising", fileConn)
     BA = BA/AR
+    writeLines("masking", fileConn)
     BA[AR == 0] = NaN
+    writeLines("outputting", fileConn)
     BA = writeRaster(BA, file = tempFile)
+    
     return(BA)
 }
 
@@ -59,5 +87,13 @@ cutCords <- function(id, xs) {
 }
 xcut = cutCords(1:2, xFromCol(dat, 1:ncol(dat)))
 ycut = cutCords(3:4, yFromRow(dat, 1:nrow(dat)))
+
+#browser()
+cl = makeSOCKcluster(rep("localhost", 6))
+    #lapply(layer.apply(dat[[36:nlayers(dat)]], function(i) c(i)),
+#               regridLayer, xcut = xcut, ycut = ycut, mask = mask)
+    parLapply(cl, layer.apply(dat, function(i) c(i)),
+                   regridLayer, xcut = xcut, ycut = ycut, mask = mask)
+stopCluster(cl)
 
 out = layer.apply(dat, regridLayer)
