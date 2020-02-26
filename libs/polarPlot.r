@@ -5,7 +5,7 @@ polarPlot.setup <- function(x, y, xlim = NULL, ylim = xlim, type = 'l',...) {
         x = c(x, x[1])
         y = c(y, y[1])
     }
-    x = 2 * pi * x/12
+    x = 2 * pi * (x-0.5)/12
     yn = y * cos(x)
     xn = y * sin(x)
     x = xn; y = yn
@@ -18,7 +18,7 @@ polarPlot.lines <- function(x, y, ...) {
 
     x = c(x, x[1])
     y = c(y, y[1])
-    x = 2 * pi * x/12
+    x = 2 * pi * (x-0.5)/12
     yn = y * cos(x)
     xn = y * sin(x)
     x = xn; y = yn
@@ -28,14 +28,14 @@ polarPlot.lines <- function(x, y, ...) {
 
 polarPlot.polygon <- function(x, y, col = "black", alpha = 0.67, border = TRUE, ...) {
     x0 = x; y0 = y
-    
+    x = x- 0.5
     x = 2 * pi * x/12
     yn = apply(y, 1, function(i) i * cos(x))
     xn = apply(y, 1, function(i) i * sin(x)) 
     
     x = rbind(xn, xn[1, ]); y = rbind(yn, yn[1, ])
-    
-    polygon(x, y, border = NA, col = make.transparent(col, alpha), ...)
+    xp = c(x[,1], rev(x[,2])); yp = c(y[,1], rev(y[,2]))
+    polygon(xp, yp, border = NA, col = make.transparent(col, alpha), ...)
     if (border) {
         lines(x[,1], y[,1], col = col)
         lines(x[,2], y[,2], col = col)
