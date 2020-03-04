@@ -1,6 +1,9 @@
 library(raster)
 library(greenbrown)
 source("libs/plotStandardMap.r")
+library(gitBasedProjects)
+library(rasterExtras)
+library(ncdf4)
 graphics.off()
 
 files = paste0("outputs/amazon_region/",
@@ -26,6 +29,11 @@ limitss       = list(c(0   , 1, 10, 20, 40, 60, 80),
                      c(0, 0.1, 1, 2, 5, 10, 20, 50),
                      c(0, 0.1, 1, 2, 5, 10, 20, 50),
                      c(0, 0.1, 1, 2, 5, 10, 20, 50))
+
+regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
+               B = -c(61.25, 53.75, 11.25,  6.25),  
+               C = -c(48.25, 43.25,  8.75,  1.25),
+               D = -c(66.25, 58.75, 18.75, 13.75))
 
 limits_tree = seq(0, 0.9, 0.1) * 100
                      
@@ -63,47 +71,57 @@ plotVariable <- function(file, title, scale, cols, cols_trend, limits, limits_tr
     return(addLayer(trend, pValue))
 }
 png("figs/treeCoverTrends.png", height = 183, width = 183, units = 'mm', res = 300)
-layout(rbind(c(1, 3, 5, 7), c(2, 4, 6, 8), c(9, 10, 10, 10)))
-par(mar = rep(0,4), oma = c(0,2,2,2))
+    layout(rbind(c(1, 3, 5, 7), c(2, 4, 6, 8), c(9, 10, 10, 10)))
+    par(mar = rep(0,4), oma = c(0,2,2,2))
 
-trends = mapply(plotVariable, files, names(files), scales, colss, cols_trends, limitss, limits_trends) 
-mtext(outer = TRUE, side = 2, adj = 1 - 0.33/2, 'Cover (%)')
-mtext(outer = TRUE, side = 2, adj = 0.5, 'Trend in Cover\nover period (%)', line = -1)
+    trends = mapply(plotVariable, files, names(files), scales, colss, cols_trends,
+                    limitss, limits_trends) 
+    mtext(outer = TRUE, side = 2, adj = 1 - 0.33/2, 'Cover (%)')
+    mtext(outer = TRUE, side = 2, adj = 0.5, 'Trend in Cover\nover period (%)', line = -1)
 
-summ = trends[[1]][[1]]
-summ[] = NaN
+    summ = trends[[1]][[1]]
+    summ[] = NaN
 
-p = c(0, 0, 0)
+    p = c(0, 0, 0)
 
-makeTests <- function(trend) 
-    list(trend[[2]] >- 0.05 | trend[[1]] == 0, trend[[2]] < 0.05 & trend[[1]] < 0, trend[[2]] < 0.05 & trend[[1]] > 0)
+    makeTests <- function(trend) 
+        list(trend[[2]] >- 0.1 | trend[[1]] == 0, trend[[2]] < 0.1 & trend[[1]] < 0,
+             trend[[2]] < 0.1 & trend[[1]] > 0)
 
-labs = c("no change in", "decreased", "increased")
-labs_out = c()
-for (tree in makeTests(trends[[1]]))  {
-    p[1] = p[1] + 1
-    p[2] = 0
-    for (agri in makeTests(trends[[4]])) {
-        p[2] = p[2] + 1
-        p[3] = p[3] + 1
-        mask = tree & agri
+    labs = c("no change in", "decreased", "increased")
+    labs_out = c()
+    for (tree in makeTests(trends[[1]]))  {
+        p[1] = p[1] + 1
+        p[2] = 0
+        for (agri in makeTests(trends[[4]])) {
+            p[2] = p[2] + 1
+            p[3] = p[3] + 1
+            mask = tree & agri
         
-        summ[mask] = p[3]
-        labs_out = c(labs_out, paste(labs[p[1]], "tree cover,", labs[p[2]], "agriculature"))
+            summ[mask] = p[3]
+            labs_out = c(labs_out, paste(labs[p[1]], "tree cover,", labs[p[2]], "agriculature"))
+        }
     }
-}
 
-cols = c("white", "cyan", "orange", "#2B5000", "pink", "red", "#99CC00", "#000066", "magenta")
-plotStandardMap(summ, cols = cols, limits = (2:length(labs_out))-0.5)
-lines(c(-180, 180), c(-23.5, -23.5), lty = 2, lwd = 1.5)
-mtext(side = 2, "Trend based regions")
-plot.new()
-legend('left', legend = labs_out, pch = 15, pt.cex = 3, col = cols)
+    cols = c("white", "cyan", "orange", "#2B5000", "pink", "red",
+             "#99CC00", "#000066", "magenta")
+    plotStandardMap(summ, cols = cols, limits = (2:length(labs_out))-0.5)
+
+    addBox <- function(xs, ys = NULL, ...) {  
+        if (is.null(ys)) ys = xs[3:4]
+        lines(c(xs[1:2], xs[2:1], xs[1]), c(ys[1], ys[1:2], ys[2:1]), ...)
+    }
+    lapply(regions, addBox, lwd = 2)
+    
+    lines(c(-180, 180), c(-23.5, -23.5), lty = 2, lwd = 1.5)
+    mtext(side = 2, "Trend based regions")
+    plot.new()
+    legend('left', legend = labs_out, pch = 15, pt.cex = 3, col = cols)
+dev.off()
 
 comment = as.list(1:length(labs_out))
 names(comment) = labs_out
 writeRaster.gitInfo(summ, 'outputs/amazon_region/treeCoverTrendRegions.nc', comment = comment, overwrite = TRUE)
-dev.off()
 
 deforestMask = summ
 deforestMask[summ!= 6] = 0
