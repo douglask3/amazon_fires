@@ -62,7 +62,7 @@ plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
     mtext(title3, adj = 0.1, line = 0.0)
     mtext(title2, side = 2, line = -1.5)
     if (add_legend) {
-        add_raster_legend2(cols, limits, dat = trend[[2]],
+        add_raster_legend2(cols, limits, dat = r,
                            transpose = FALSE, srt = 0, oneSideLabels= FALSE,
                            plot_loc = c(0.35, 0.99, 0.09, 0.12),  ylabposScling=0.8, ...)
     }
