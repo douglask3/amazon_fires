@@ -14,7 +14,10 @@ global_extent = extent(c(-85, -30, -60, 13))
 
 files = c("Burnt area" = "outputs/amazon_region/burnt_area-GFED4s_2.5degree_2001-2016.nc",
           "Fire count" = "outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc")
-               
+
+units = c('%', '10k~m-2~')    
+scale = c(100, NaN)
+
 regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
                B = -c(61.25, 53.75, 11.25,  6.25),  
                C = -c(48.25, 43.25,  8.75,  1.25),
@@ -24,6 +27,8 @@ axisMonth = c(0, 0, 0, 0)
 reds9   = c("#FFFBF7", "#F7EBDE", "#EFDBC6", "#E1CA9E", "#D6AE6B", 
             "#C69242", "#B57121", "#9C5108", "#6B3008")
                 
+aa_limits = list(c(0, 0.1, 0.2, 0.5, 1, 2, 5, 10),
+                 c(0, 0.1, 0.2, 0.5, 1, 2, 5, 10)/2)
 aa_cols = c('#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026')
 phase_cols = c('#313695', '#a50026', '#ffff00', '#313695')
 phase_cols = c('#111695', '#22ff22', '#ffff00', '#bb6600', '#a50026', '#111695')
@@ -35,9 +40,17 @@ modal_limits = c(1, 1.1, 1.2, 1.5, 2)
 limits_rank = seq(0, 0.9, 0.1)
 cols_rank = c('#ffffe5','#f7fcb9','#d9f0a3','#addd8e','#78c679','#41ab5d','#238443','#006837','#004529')
 
+runAll <- function(name) {
 obs = lapply(files, brick)
-obs[[1]] = obs[[1]] * 100
-obs[[2]] = 100* obs[[2]]/raster::area(obs[[2]][[1]])
+
+scaleFun <- function(r, scale) {
+    if (is.na(scale)) r = 100 * r/raster::area(obs[[2]][[1]])
+    else r = r * scale
+    return(r)
+}
+obs = mapply(scaleFun, obs, scale)
+#obs[[1]] = obs[[1]] * 100
+#obs[[2]] = 100* obs[[2]]/raster::area(obs[[2]][[1]])
 
 mxLayers = min(sapply(obs, nlayers))
 obs = obs_ia =lapply(obs, function(i) i[[1:mxLayers]])
@@ -84,7 +97,8 @@ srank.raster <- function(r1, r2, lab = '', name = '',season = NULL) {
     return(out)
 }
 
-png("figs/fire_var_seasonality.png", height = 400, width = 160, res = 300, units = 'mm')
+fname = paste0("figs/fire_var_seasonality-", name, ".png")
+png(fname, height = 400, width = 160, res = 300, units = 'mm')
     par(oma = c(1, 2, 1, 1))
     layout(rbind(cbind(c(1, 4, 4, 5, 5), c(2, 6, 6, 9, 9), c(2, 6, 7, 7, 9), c(2, 6, 6, 9, 9), c(3, 8, 8, 10, 10)),
                  rbind(c(11, 12, 12, 12, 0), c(13, 14, 14, 14, 15), c(16, 17, 17, 17, 18))),
@@ -98,8 +112,8 @@ png("figs/fire_var_seasonality.png", height = 400, width = 160, res = 300, units
     par(mar = c(7, 2, 1, 1.5)) 
     plot(y~x, pch = 19, col = cols, cex = 1, axes = FALSE, xlab = '', ylab = '')
     addLetLab('a', line = 0)
-    mtext.units(side = 1, line = 2, 'Burnt area (%)')
-    mtext.units(side = 2, line = 2, 'Fire count (10k~m-2~)')
+    mtext.units(side = 1, line = 2, paste0(names(files)[1], ' (', units[1], ')'))
+    mtext.units(side = 2, line = 2, paste0(names(files)[2], ' (', units[2], ')'))
     addAxis <- function(labels, side) {
         at = log(labels + 0.000001)
         axis(at = at, labels = labels, side = side)
@@ -122,9 +136,10 @@ png("figs/fire_var_seasonality.png", height = 400, width = 160, res = 300, units
         StandardLegend(aa, limits = limits, cols = aa_cols, units = units, add = TRUE,
                         oneSideLabels = FALSE)
     }
-    mapply(plotAA, obs, list(c(0, 0.1, 0.2, 0.5, 1, 2, 5, 10),
-                             c(0, 0.1, 0.2, 0.5, 1, 2, 5, 10)/2),
-           c('b', 'c'), c('Annual average', ''), c('Burnt area', 'Fire count'), c('%', '    10k~m-2~'))
+    units_aa = units
+    units_aa[units == '10k~m-2~'] = '    10k~m-2~'
+    mapply(plotAA, obs, aa_limits,
+           c('b', 'c'), c('Annual average', ''), names(files), units_aa)
     
     mapply(ModalMap, obs, names(files), c(T, F), c('d', 'g'), c('Modality', '')) 
 
@@ -176,7 +191,22 @@ png("figs/fire_var_seasonality.png", height = 400, width = 160, res = 300, units
                   axisMonth, SIMPLIFY = FALSE)
     par(mar = c(2, 3, 2, 0))
     plot(c(0, 1), c(0,1), type = 'n', axes = FALSE, xlab = '', ylab = '')
-    mtext.units("Burnt area (%)", col = "blue", adj = 0, side = 3, line = -2)
-    mtext.units("Fire count (10k~m-2~)", col = "red", adj = 0, side = 3, line = -3.8)
+    mtext.units(paste0(names(files)[1], ' (', units[1], ')'), col = "blue", adj = 0, side = 3, line = -2)
+    mtext.units(paste0(names(files)[2], ' (', units[2], ')'), col = "red", adj = 0, side = 3, line = -3.8)
 
 dev.off()
+}
+
+runAll("GFED4s_vs_INPE_FC")
+
+files[1] = "outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc"
+runAll("Modis_vs_INPE_FC")
+
+
+files = c("Burnt area (GFED4s)" = "outputs/amazon_region/burnt_area-GFED4s_2.5degree_2001-2016.nc",
+          "Burnt area (MCD64A1)" = "outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc")
+
+units = c('%', '%')  
+aa_limits[2] = aa_limits[1] 
+scale = c(100, 100)
+runAll("GFED4s_vs_Modis")
