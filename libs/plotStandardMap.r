@@ -9,7 +9,7 @@ library(mapplots)
 library(rgdal)
 
 #aus_ste <- readOGR(dsn = "data/state_shape/STE11aAust.shp")
-#rivers <- readOGR(dsn = "data/majorrivers_0_0", layer = "MajorRivers")
+rivers <- readOGR(dsn = "data/majorrivers_0_0", layer = "MajorRivers")
 
 StandardLegend <- function(cols, limits, dat, rightx = 0.95, extend_max = TRUE, oneSideLabels = TRUE, add = FALSE, ...) {
     if (add)        
