@@ -14,7 +14,7 @@ mask = 'data/climate/climate_mask.nc'
 regridFiles <- function(dir) {
     files_in  = list.files(dir, full.names = TRUE)
     files_in  = files_in[grepl('.nc', files_in)]
-
+    files_in = files_in[!grepl('quantilePosition_2019_firecount.nc',files_in)]
     files_out = strsplit(files_in, '//', fixed = TRUE)
     files_out = sapply(files_out, paste0, collapse = "/amazon_region/")
     
