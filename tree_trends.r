@@ -1,6 +1,7 @@
 library(raster)
 library(greenbrown)
 source("libs/plotStandardMap.r")
+graphics.off()
 
 files = paste0("outputs/amazon_region/",
                c("vegetation/treecover-2001-June2018.nc",
@@ -25,10 +26,18 @@ limitss       = list(c(0   , 1, 10, 20, 40, 60, 80),
                      c(0, 0.1, 1, 2, 5, 10, 20, 50),
                      c(0, 0.1, 1, 2, 5, 10, 20, 50),
                      c(0, 0.1, 1, 2, 5, 10, 20, 50))
+
+limits_tree = seq(0, 0.9, 0.1) * 100
                      
 scales = c(1/0.8, 1, 1, 1)
 
-logistic <- function(r) 1/(1+exp(-r))
+logit <- function(r, ns) {
+    r[r<0.000001    ] = 0.000001    
+    r[r>(1-0.000001)] = 1-0.000001
+    r = log(r/(1+r*(-1)))
+    return(r)
+}
+logistic <- function(r) 1/(1+exp(r*(-1)))
 
 plotVariable <- function(file, title, scale, cols, cols_trend, limits, limits_trend) {
     
@@ -36,7 +45,7 @@ plotVariable <- function(file, title, scale, cols, cols_trend, limits, limits_tr
     dat = dat[[seq(1, nlayers(dat), by = 12)]]*scale
     ldat = logit(dat, ns = 9E9)   
     nl = nlayers(dat)
-
+    
     trend = TrendRaster(ldat, freq = 1)
     pValue = trend[[3]]
     
@@ -45,14 +54,15 @@ plotVariable <- function(file, title, scale, cols, cols_trend, limits, limits_tr
     
     trend = dat[[nl]] - ddat
     trend = trend * 100
-    dat = dat*100
+    dat = dat * 100
     
     plotStandardMap(dat[[nlayers(dat)]], cols, limits_tree, NULL, TRUE, maxLab = 100)
     mtext(side = 3, title)
+    
     plotStandardMap(trend, cols_trend, limits_trend, pValue, TRUE, extend_max = TRUE, extend_min = TRUE)  
     return(addLayer(trend, pValue))
 }
-
+png("figs/treeCoverTrends.png", height = 183, width = 183, units = 'mm', res = 300)
 layout(rbind(c(1, 3, 5, 7), c(2, 4, 6, 8), c(9, 10, 10, 10)))
 par(mar = rep(0,4), oma = c(0,2,2,2))
 
@@ -93,3 +103,15 @@ legend('left', legend = labs_out, pch = 15, pt.cex = 3, col = cols)
 comment = as.list(1:length(labs_out))
 names(comment) = labs_out
 writeRaster.gitInfo(summ, 'outputs/amazon_region/treeCoverTrendRegions.nc', comment = comment, overwrite = TRUE)
+dev.off()
+
+deforestMask = summ
+deforestMask[summ!= 6] = 0
+deforestMask[summ== 6] = 1
+
+lat = yFromCell(summ,1:length(summ))
+lat = lat > (-23.5) & lat < 0
+deforestMask[!lat] = 0
+deforestMask[is.na(summ)] = NaN
+
+writeRaster.gitInfo(summ, 'outputs/amazon_region/treeCoverTrendRegions-deforestMask.nc', comment = comment, overwrite = TRUE)
