@@ -65,7 +65,10 @@ makeSoilDepth <- function(dir) {
     seaCy12 <- function(r) {	
         Cy12 <- function(mnth) {
 	    subr = r[[(mnth-11):mnth]]
-	    return(max(subr) / mean(subr))
+            mnSubr =  mean(subr)
+            out = max(subr) /mnSubr
+            out[mnSubr == 0] = 0
+	    return(out)
         }
         return(layer.apply(13:nlayers(r), Cy12))
     }
