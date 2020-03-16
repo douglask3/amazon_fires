@@ -33,7 +33,8 @@ limitss       = list(c(0   , 1, 10, 20, 40, 60, 80),
 regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
                B = -c(61.25, 53.75, 11.25,  6.25),  
                C = -c(48.25, 43.25,  8.75,  1.25),
-               D = -c(66.25, 58.75, 18.75, 13.75))
+               D = -c(66.25, 58.75, 18.75, 13.75),
+               E = -c(61.25, 53.75, 23.75, 18.75))
 
 limits_tree = seq(0, 0.9, 0.1) * 100
                      
@@ -70,7 +71,7 @@ plotVariable <- function(file, title, scale, cols, cols_trend, limits, limits_tr
     plotStandardMap(trend, cols_trend, limits_trend, pValue, TRUE, extend_max = TRUE, extend_min = TRUE)  
     return(addLayer(trend, pValue))
 }
-png("figs/treeCoverTrends.png", height = 183, width = 183, units = 'mm', res = 300)
+png("figs/treeCoverTrends.png", height = 200, width = 183, units = 'mm', res = 300)
     layout(rbind(c(1, 3, 5, 7), c(2, 4, 6, 8), c(9, 10, 10, 10)))
     par(mar = rep(0,4), oma = c(0,2,2,2))
 
