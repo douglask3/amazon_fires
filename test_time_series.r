@@ -3,12 +3,12 @@ source("libs/make_transparent.r")
 source("libs/plotStandardMap.r")
 library(rasterExtras)
 graphics.off()
-layers = c(5, 95)
+layers = c(5, 95, 50)
 cols = c("tan", "#DDDD00", "red")
 
-error_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist/fire_summary_precentile.nc'
+error_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/fire_summary_precentile.nc'
 
-uncert_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist/model_summary.nc'
+uncert_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/model_summary.nc'
 
 #error_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area-Tnorm/constant_post_2018_full_2002-attempt3/fire_summary_precentile.nc'
 
@@ -23,7 +23,7 @@ obs = "outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc"
 #obs = "outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc"
 
 
-mnths = 1:227
+mnths = 1:228
 
 fire_season = 8:9
 
@@ -31,7 +31,7 @@ fire_season = 8:9
 fire_seasons = sapply(fire_season, function(m) mnths[seq(m, max(mnths), by = 12)])
 
 temp_file_rs = paste0(c('temp/time_sries_fire_vars_BA_newMoist10', layers), collapse = '-') 
-temp_file_rs = paste0(c('temp/time_sries_fire_vars9', layers), collapse = '-') 
+temp_file_rs = paste0(c('temp/time_sries_fire_vars-DeepSoil15', layers), collapse = '-') 
 temp_file = paste0(temp_file_rs, '-Open.Rd')
 
 openPost <- function(mnth, file, layer) {
@@ -53,8 +53,9 @@ regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
 regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
                B = -c(61.25, 53.75, 11.25,  6.25),  
                C = -c(48.25, 43.25,  8.75,  1.25),
-               D = -c(66.25, 58.75, 18.75, 13.75),
-               "E All Deforested" = 'outputs/amazon_region/treeCoverTrendRegions.nc')
+               D = -c(66.25, 58.75, 18.75, 13.75),   
+               E = -c( 61.25, 53.75, 23.75, 18.75), 
+               "F All Deforested" = 'outputs/amazon_region/treeCoverTrendRegions.nc')
  
 if (file.exists(temp_file)) {
     load(temp_file) 
@@ -106,7 +107,7 @@ plotRegion <- function(extent, name) {
     } else {
         error_r  = cropMean(error, extent, name, 'error')
         uncert_r  = cropMean(uncert, extent, name, 'uncert')
-        obs_r = cropMean(list(obs, obs), extent, name, 'obs')
+        obs_r = cropMean(list(obs, obs, obs), extent, name, 'obs')
     }
     
     par(mar = c(1.5, 3, 0, 0))    
@@ -121,10 +122,12 @@ plotRegion <- function(extent, name) {
         grid(ny = NULL, nx = 0, col = col)
     }
     addGrid()
-    #grid(nx = -1 + length(mnths)/12, ny = NULL)
-    polygonCoords(mnths, error_r-0.002, cols[1], lwd = 2)
-    polygonCoords(mnths, uncert_r, cols[2], lwd = 2)
-    polygonCoords(mnths, obs_r, cols[3], lwd = 2)  
+    #grid(nx = -1 + length(mnths)/12, ny = NULL)  
+    #polygonCoords(mnths, obs_r, cols[3], lwd = 2)  
+    polygonCoords(mnths, error_r-0.002, cols[1], lwd = 2)  
+    polygonCoords(mnths, obs_r, cols[3], lwd = 1)  
+    polygonCoords(mnths, uncert_r, cols[2], lwd = 2)  
+    polygonCoords(mnths, obs_r, cols[3], lwd = 1, lty = 3)  
     addGrid(col = make.transparent("black", 0.9)   )
     if (grepl("All Deforested", name)) {
         for (mn in 1:ncol(fire_seasons)) {
@@ -146,9 +149,11 @@ plotRegion <- function(extent, name) {
     climScale <- function(r) {        
         for (mn in 1:12) {
             index = seq(mn, max(mnths), by = 12)
-            r[index,] = r[index,] / mean(r[index,])
+            r[index,] = r[index,] / mean(r[index,3])
         }
-        r[r < 0.00001] = 0.00001
+        r = r[,1:2]
+        
+        r[r < 0.01] = 0.01
         r
     }   
     obs_r = climScale(obs_r)
@@ -161,38 +166,43 @@ plotRegion <- function(extent, name) {
         fire_seasonsi = as.matrix(fire_seasonsi)  
         findFSvalues <- function(r)
             t(apply(fire_seasonsi, 1, function(fs) apply(r, 2, function(i) mean(i[fs]))))
-  
+        
         obs_r    = findFSvalues(obs_r   )  
         uncert_r = findFSvalues(uncert_r)
         error_r  = findFSvalues(error_r )     
 
-    
         plot(range(obs_r), range(uncert_r, error_r), log = 'xy',
              xlim = range(obs_r,uncert_r, obs_r*1.3), ylim = range(obs_r,uncert_r, obs_r*1.3),
-             xlab = '', ylab = '', yaxt = 'n', type = 'n', xaxt = 'n')
+             xlab = '', ylab = '', yaxt = 'n', cex = 1000, pch = 19, xaxt = 'n')
         axis(4, padj = -1)
-
+        
         if (name == names(regions)[1])
             mtext(side = 3, month.name[fire_seasonsi[1,1]])
         if (name == 'A') axis(1, at = c(0.1, 0.2, 0.5, 1, 2, 5), padj = -1)
             else axis(1, padj = -1)
-        lines(x = c(0.0001, 9E9), y = c(0.0001,9E9), col = "black", lty = 2)
-
+        lines(x = c(0.0001, 9E9), y = c(0.0001,9E9), col = "white", lty = 2)
+        lines(x = c(0.0001, 9E9), y = c(1, 1), lty = 3, col = "white" )
        
-        addDumbells(obs_r, error_r, uncert_r) 
+        addDumbells(obs_r, error_r, uncert_r)         
+        lines(x = c(0.0001, 9E9), y = c(0.0001,9E9),
+              col = make.transparent("white", 0.67), lty = 2)
+        lines(x = c(0.0001, 9E9), y = c(1, 1), lty = 3,
+              col = make.transparent("white", 0.67 ) ) 
  
     }
     addDumbells <- function(x, ye, yu) {
-        points(x[,1], yu[,1], pch = 19, col = cols_years)
-        points(x[,2], yu[,2], pch = 19, col = cols_years) 
-
-        apply(cbind(x[,], yu[,]), 1,
-              function(i) lines(c(i[1], i[2]), c(i[3], i[4]), lwd = 1))   
+        points(x[,1], yu[,1], pch = 19, col = cols_years, cex = 0.5)
+        points(x[,2], yu[,2], pch = 19, col = cols_years, cex = 0.5) 
+        cols_years = make.transparent(cols_years, 0.95)
+        for (i in 1:20) {
+        apply(cbind(x[,], yu[,], cols_years), 1,
+              function(i) lines(c(i[1], i[2]), c(i[3], i[4]), lwd = 2.67, col = i[5]))   
 
         apply(cbind(x[,], ye[,], cols_years), 1,
-              function(i) lines(c(i[1], i[2]), c(i[3], i[4]), col = i[5], lwd = 0.5))  
+              function(i) lines(c(i[1], i[2]), c(i[3], i[4]), col = i[5], lwd = 0.6))  
         apply(cbind(x[,], ye[,], cols_years), 1,
-              function(i) lines(c(i[1], i[2]), c(i[3], i[4]), lwd = 0.2, lty = 2)) 
+              function(i) lines(c(i[1], i[2]), c(i[3], i[4]), lwd = 0.2, lty = 0.5, col = "white")) 
+        }
     } 
     apply(fire_seasons, 2, dumbell)
     if (name == tail(names(regions), 1)) {
@@ -218,9 +228,9 @@ legend('topright', c('Full postirior', 'Parameter uncertainty', 'Observations'),
     #}
 }
 
-png("figs/test_time_series.png", height = 183 * 7/8, width = 183, res = 300, units = 'mm')
-    layout(t(matrix(c(1:17, 17), nrow = 3)), widths = c(.7, 0.15, 0.15),
-            heights = c(1,1,1,1,1,0.7))
+png("figs/test_time_series.png", height = 183 * 7/8 *6.7/5.7, width = 183, res = 300, units = 'mm')
+    layout(t(matrix(c(1:20, 20), nrow = 3)), widths = c(.7, 0.15, 0.15),
+            heights = c(1,1,1,1,1,1,0.7))
     par(oma = c(0.67, 1, 2, 2.5))
 
     mapply(plotRegion, regions, names(regions))
