@@ -56,8 +56,8 @@ testMonth <- function(mnth, region, regionName) {
     openMod <- function(mn, i, file = error_file) 
         cropRegion(brick(file, level = mn))[[i]]
     
-    openMeanModLevels <- function(is, ...) {
-        temp_file = paste0('temp/MeanSimLevelsforMnth-', mnth, '-level-', i,
+    openMeanModLevels <- function(i, ...) {
+        temp_file = paste0('temp/MeanSimLevelsforMnthx-', mnth, '-level-', i,
                             '-region-', regionName, '.nc')
         if (file.exists(temp_file)) {
             out = raster(temp_file)
@@ -95,7 +95,7 @@ testMonth <- function(mnth, region, regionName) {
     
     mod = layer.apply(quantiles_tested, openMod, mn = mnth)
     modU = layer.apply(c(5, 95), openMod, mn = mnth, file = uncert_file)
-    modMean  = makeModMean('error')
+    modMean  = openMeanModLevels(50)
     modMeanU = makeModMean('uncert', file = uncert_file)
     #layer.apply(quantiles_tested, openMeanModLevel)   
     #modMeanU = mean.Tnorm(openMeanModLevel(50, file = uncert_file),
@@ -113,14 +113,14 @@ testMonth <- function(mnth, region, regionName) {
     obsv  = meanrasterNA(obs)
     modv  = unlist(layer.apply(mod, meanrasterNA))
     obsva = meanrasterNA(obs/obsMean)
-    modva = unlist(layer.apply(mod/modMean, meanrasterNA))
+    modva = modv/unlist(layer.apply(modMean, meanrasterNA))
     t1 = which_q(obsv, modv)
     t2 = which_q(1, modva)
     t3 = which_q(obsva, modva)
-    browser()
+   
     out = c(obsv, obsva,
            unlist(layer.apply(modU, meanrasterNA)),
-           unlist(layer.apply(modU/modMeanU, meanrasterNA)),
+           unlist(layer.apply(modU/modMeanU[[50]], meanrasterNA)),
            t1, t2, t3)
     save(out, file = temp_file_all)
     return(out)
@@ -134,7 +134,14 @@ testRegion <- function( ...) {
                       "Model burnt area 5", "Model burnt area 95",
                       "Model anomoly 5", "Model anomoly 95",
                       "t1", "t2", "t3")
+    out[1,] = out[1,] * 100
+    out[3:4,] = out[3:4,]*100
+    out[7:9,] = 100 - out[7:9,]
     return(out)
 }
 
 tab = mapply(testRegion, regions, names(regions), SIMPLIFY = FALSE)
+tab = lapply(tab, round, 3)
+tab = lapply(tab, t)
+mapply(write.csv,tab, paste0('docs/probTable-', names(regions), '.csv'))
+
