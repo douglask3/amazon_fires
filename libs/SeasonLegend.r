@@ -3,7 +3,7 @@ SeasonLegend <- function(limits, cols, add = FALSE,
                          dat, e_lims = NULL,
                          mnthLabs = 1:12,
                          mar = c(4,0,0,0),labR = 0.87,
-                         MonLetters = c('J','F','M','A','M','J','J','A','S','O','N','D'),
+                         MonLetters = c('F','M','A','M','J','J','A','S','O','N','D', 'J'),
 						 xp = 1.0, yp = 0.13, radius = 0.11,
                          ...) {
     
