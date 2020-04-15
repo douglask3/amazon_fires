@@ -4,6 +4,7 @@ source("libs/plotStandardMap.r")
 source("libs/SeasonLegend.r")
 source("libs/YearlySeason.r")
 source("libs/addLetLab.r")
+source("libs/srank.raster.r")
 library(raster)
 library(rasterExtras)
 source("../gitProjectExtras/gitBasedProjects/R/sourceAllLibs.r")
@@ -71,6 +72,14 @@ obs = lapply(obs, convert2Climatology)
 obs = lapply(obs, raster::crop, global_extent)
 obs[[2]][is.na(obs[[1]])] = NaN
 
+modal_approx <- function(dat) {
+    modal = testModal(obs)
+    modal_approx = layer.apply(2:6, function(i)
+                               modal[[i]] * (0.5-cos(2*pi * modal[[i+6]]/12)/2))
+    modal_approx = 1 + sum(modal_approx, na.rm = TRUE)/modal[[1]]
+    return(modal_approx)
+}
+
 ModalMap <- function(obs, txt, addLegend, let, additional) {
     modal = testModal(obs)
     modal_approx = layer.apply(2:6, function(i)
@@ -84,27 +93,6 @@ ModalMap <- function(obs, txt, addLegend, let, additional) {
         StandardLegend(limits = modal_limits - 1, cols = modal_cols, dat = modal_approx-1,
                        extend_max = TRUE,
                        labelss = modal_limits, add = TRUE) 
-}
-
-srank.raster <- function(r1, r2, lab = '', name = '',season = NULL) {
-    if(!is.null(season)) {
-        r1 = YearlySeason(season, r1)
-        r2 = YearlySeason(season, r2)
-    }
-    mask = !any(is.na(r1+r2))
-    srank.cell <- function(v1, v2) 
-         cor.test(v1, v2, method = "spearman")[[4]]
-    
-    out = r1[[1]]
-    out[mask] = mapply(srank.cell, as.data.frame(t(r1[mask])), as.data.frame(t(r2[mask])))
-    out[!mask] = NaN
-    
-    plotStandardMap(out, limits = limits_rank, cols = cols_rank)
-    #mtext(name, side = 2, line = -2)
-    addLetLab(lab, name)
-    StandardLegend(out, limits = limits_rank, cols = cols_rank,
-                   extend_max = FALSE, maxLab = 1, add = TRUE, oneSideLabels = FALSE)
-    return(out)
 }
 
 fname = paste0("figs/fire_var_seasonality-", name, ".png")

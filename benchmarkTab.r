@@ -14,6 +14,8 @@ fireMonths_early = 6:9
 fireMonths_late  = 9
 
 Tfname0 = 'temp/benchmarkingSTuff2'
+mask    = NULL
+extent  = NULL
 
 col_null = c("#e0f3f8", "#74add1", "#313695")
 col_ss   = c("#a50026", "#bf812d", "#ffff99")
@@ -27,7 +29,10 @@ getAllMonths <- function(fireMonths, dat) {
 
 brickR <- function(r) {
     r = brick(r)[[1:216]]
-    r[r>9E9] =NaN
+    if (!is.null(extent)) r = raster::crop(r, extent)
+    
+    r[r>9E9] = NaN
+    if (!is.null(mask)) r[!mask] = NaN
     return(r)
 }
 obs = brickR(obs)
@@ -44,7 +49,7 @@ obs.aaJJA = mean(obs.JJA)
 obs.aaSep = mean(obs.Sep)
 
 sim_files = list.files(sim_dir, full.names = TRUE)
-sim_files = sim_files[grepl('sample_no_', sim_files)]#[1:12]
+sim_files = sim_files[grepl('sample_no_', sim_files)]#[1:30]
 
 runTempFile <- function(file, FUN, Tfname, Tfname0, MoreArgs) {
     id = strsplit(strsplit(file, 'sample_')[[1]][2], '.nc')[[1]]
@@ -65,7 +70,7 @@ runAllMember <- function(FUN, Tfname, MoreArgs) {
                       list("brick", "brickR", "NME", "NME.default",
                             "NMSE", "NMSE.default", "score", "score.NME", 
                             "mean.raster", "layer.apply", "nlayers", "YearlySeason",
-                            "srank.raster"))
+                            "srank.raster", "mask", "extent"))
         out = parLapply(cl, sim_files, runTempFile, FUN, Tfname = Tfname, Tfname0, MoreArgs)
     stopCluster(cl)    
     return(out)
@@ -163,7 +168,7 @@ plotNMEscores <- function(Tname, mnths, obs, mt = 1:2, select = FALSE) {
     return(tabs)
 }
 png("figs/benchmarkingScore.png", width = 6, height = 9, units = 'in', res = 300)
-par(mfrow = c(5, 2), mar = c(2, 0.5, 1.5, 0.5), oma = c(1, 3, 0.5, 0))
+par(mfrow = c(6, 2), mar = c(2, 0.5, 1.5, 0.5), oma = c(1, 3, 0.5, 0))
 
 tabs = list()
 tabs[['everything']] = plotNMEscores('NME_allandeveything', NaN, obs, 2, F)
@@ -262,6 +267,28 @@ tabs[['monthly_rank']] = plotMT(comp.srank.monthly, list(0, 0, RR_monthly))
 mtext('f) Spearmans rank monthly', adj = 0.1)
 tabs[['annual rank']] = plotMT(comp.srank.annual , list(0, 0, RR_annual ))
 mtext('g) Spearmans rank annual', adj = 0.1)
+
+
+Tfname0 = 'temp/benchmarkingSTuff2-masked'
+
+mask   = raster('outputs/amazon_region/treeCoverTrendRegions.nc') == 6
+extent = extent( -83.75, -50, -23.3, 0)
+mask   = crop(mask, extent)
+
+obs = brickR(obs)
+
+comp.srank = runAllMember(srankI, 'srankIi', list(obs[[1:216]], grid_Area, total_Area))
+comp.srank.monthly = sapply(comp.srank, function(i) i[[1]])
+comp.srank.annual  = sapply(comp.srank, function(i) i[[2]])
+
+RR_monthly =  sapply(1:1000,srank.rr)#srank.raster(obs, NULL, plot = FALSE)
+RR_annual  =  sapply(1:1000,srank.rr, 'srank_rr_season1-12', season = 1:12)
+
+tabs[['monthly_rank_AAD']] = plotMT(comp.srank.monthly, list(0, 0, RR_monthly))
+mtext('h) Spearmans rank monthly - AAD', adj = 0.1)
+tabs[['annual rank_AAD']] = plotMT(comp.srank.annual , list(0, 0, RR_annual ))
+mtext('i) Spearmans rank annual - AAD', adj = 0.1)
+
 
 par(mar = rep(0,4))
 plot.new()
