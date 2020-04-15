@@ -103,17 +103,24 @@ png("figs/treeCoverTrends.png", height = 200, width = 183, units = 'mm', res = 3
             labs_out = c(labs_out, paste(labs[p[1]], "tree cover,", labs[p[2]], "agriculature"))
         }
     }
-
+    #dev.new()
     cols = c("white", "cyan", "orange", "#2B5000", "pink", "red",
              "#99CC00", "#000066", "magenta")
     plotStandardMap(summ, cols = cols, limits = (2:length(labs_out))-0.5)
 
-    addBox <- function(xs, ys = NULL, ...) {  
+    addBox <- function(xs, ys = NULL, name = NULL, ...) {  
         if (is.null(ys)) ys = xs[3:4]
         lines(c(xs[1:2], xs[2:1], xs[1]), c(ys[1], ys[1:2], ys[2:1]), ...)
+        if (!is.null(name)) {
+            FUN <- function(col, cex) text(x = mean(xs[1:2]), y = mean(ys[1:2]), name,
+                                            col = make.transparent(col, 0.67), cex = cex, font = 2)
+            FUN("black", 2.0)   
+            FUN("black", 1.6) 
+            FUN("white", 1.8)
+        }
     }
-    lapply(regions, addBox, lwd = 2)
-    
+    mapply(addBox, regions, name = names(regions), lwd = 2)
+    #browser() 
     lines(c(-180, 180), c(-23.5, -23.5), lty = 2, lwd = 1.5)
     mtext(side = 2, "Trend based regions")
     plot.new()
@@ -134,3 +141,46 @@ deforestMask[!lat] = 0
 deforestMask[is.na(summ)] = NaN
 
 writeRaster.gitInfo(summ, 'outputs/amazon_region/treeCoverTrendRegions-deforestMask.nc', comment = comment, overwrite = TRUE)
+
+
+BA =  brick('outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc')
+
+fireMonths = 6:8
+months = lapply(fireMonths, seq, nlayers(BA), by = 12)
+monthsByYr = lapply(1:min(sapply(months, length)),
+                    function(yr) sapply(months, function(m) m[yr]))
+
+x = trends[[4]][[1]][]
+y = trends[[1]][[1]][]
+z =  mean(BA[[tail(monthsByYr,1)[[1]]]])/mean(BA[[unlist(monthsByYr)]]); z = z[]
+
+mask = !is.na(x + y + z)
+
+x = x[mask]
+y = y[mask]
+z = z[mask]
+
+cols = rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090','#ffffbf','#e0f3f8','#abd9e9','#74add1','#4575b4','#313695'))
+limits = 0.5:4.5
+limits = c(-rev(limits), limits)
+limits = 1.2^(limits)
+
+z =  cut_results(z, limits)
+cols = cols[z]
+
+axisLogNeg <- function(x) {
+    x0 = x
+    x[x0==0] = 0.5*min(x0[x0>0])
+    x[x0>0] = log(x[x0>0])
+    x[x0<0] = -log(-x0[x0<0]+1)
+    return(x)
+}
+
+x = axisLogNeg(x)
+y = axisLogNeg(y)
+
+plot(x, y, pch = 19, cex = 3, col = cols)
+
+
+
+
