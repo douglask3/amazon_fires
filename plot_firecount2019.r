@@ -14,6 +14,7 @@ file_obs = "outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc"
 dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/'
 
 fireMonths = 6:8
+fireMonths = 9
 
 qs =seq(0, 1, 0.1)
 
@@ -39,6 +40,11 @@ cols_pc = rev(c('#a50026','#d73027','#f46d43','#fdae61','#fee090',
 limits_pc = c(1, 5, 10, 20, 40, 60, 80, 90, 95, 99)
 
 grab_cache = F
+
+range.single <- function(x) if (length(x)==1) return(x) else return(range(x))
+title3 = paste('Average',
+               paste(substr(month.name[range.single(fireMonths)], 1, 3), collapse = ' - '),
+               '2002-2019')
 
 mod_summ_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area-Tnorm/constant_post_2018_full_2002-attempt3//model_summary.nc'
 
@@ -159,7 +165,7 @@ png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png
 
     mapply(plotMapFun, obs_maps, cols = cols, limits = limits,
            title2 = c("Observations", "", ""),
-           title3 = c("Average 2002-2019", "2019", "No. years exceeded"), xaxt = FALSE)
+           title3 = c(title3, "2019", "No. years exceeded"), xaxt = FALSE)
     
     axis(4)
     axis(4, at = c(-180, 180))
@@ -246,10 +252,10 @@ png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png
     
         if (sumDir == 'X') {
             title2 = c("Quantile of\nfire season", "", "")
-            title3 = c("Average 2001-2019", "2019", "2011")
+            title3 = c(title3, "2019", "2011") 
         } else {
             title2 = c("Probability of\nfire season", "", "")
-            title3 = c("", "", "")
+            title3 = c("", "", "")      
         }
         mapply(plotStandardMap, ppoint_maps,
                title2 = title2,
