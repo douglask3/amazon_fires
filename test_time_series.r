@@ -50,12 +50,12 @@ regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
                Deep    = -c(71.25, 58.75, 6.25, 1.25),
                "All Deforested" = 'outputs/amazon_region/treeCoverTrendRegions.nc')
 
-regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
-               B = -c(61.25, 53.75, 11.25,  6.25),  
-               C = -c(48.25, 43.25,  8.75,  1.25),
-               D = -c(66.25, 58.75, 18.75, 13.75),   
-               E = -c( 61.25, 53.75, 23.75, 18.75), 
-               "F All Deforested" = 'outputs/amazon_region/treeCoverTrendRegions.nc')
+regions = list("A Acre & Southern Amazonas" = -c(71.25, 63.75, 11.25,  6.25),
+               "B Northern Mato Grosso" = -c(61.25, 53.75, 11.25,  6.25),  
+               "C Maranhão and Piauí" = -c(48.25, 43.25,  8.75,  1.25),
+               "D Bolivia" = -c(66.25, 58.75, 18.75, 13.75),   
+               "E Paraguay" = -c( 61.25, 53.75, 23.75, 18.75), 
+               "F Area of Active Deforesation" = 'outputs/amazon_region/treeCoverTrendRegions.nc')
  
 if (file.exists(temp_file)) {
     load(temp_file) 
@@ -122,6 +122,7 @@ plotRegion <- function(extent, name) {
         grid(ny = NULL, nx = 0, col = col)
     }
     addGrid()
+    mtext(name, adj = 0.1, line = -1.5)   
     #grid(nx = -1 + length(mnths)/12, ny = NULL)  
     #polygonCoords(mnths, obs_r, cols[3], lwd = 2)  
     polygonCoords(mnths, error_r-0.002, cols[1], lwd = 2)  
@@ -136,7 +137,7 @@ plotRegion <- function(extent, name) {
         }
     }
     #grid(col = make.transparent("black", 0.9), nx = -1 + length(mnths)/12, ny = NULL)
-    mtext(name, adj = 0.1, line = -1.5)   
+    mtext(name, adj = 0.1, line = -1.5, col = make.transparent("black", 0.5))   
 
     if (name == tail(names(regions),1)) {
          at = seq(1, max(mnths), by = 12)
