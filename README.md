@@ -16,10 +16,12 @@ git checkout origin/EGU2020
 ### Installing stuff
 Optimization and sampling is run in Jupyter notebooks [here](optimise_run_model). If new to Jupyter, I find the easiest way of setting all this up is through a Conda enviroment. [Instillation instrcutions here](https://docs.anaconda.com/anaconda/install/) depend on your OS. 
 
-Along with all Conda, you'll need a few python packages beyond the everyday stuff (numpy, pandas etc). Optimization uses [pymc3](https://anaconda.org/conda-forge/pymc3):
+Along with all Conda, you'll need a few python packages beyond the everyday stuff (numpy, pandas etc). Optimization uses [pymc3](https://anaconda.org/conda-forge/pymc3), [scipy](https://anaconda.org/anaconda/scipy) and [theano](http://deeplearning.net/software/theano/install_ubuntu.html) along with some of its dependancies:
 
 ```
 conda install -c conda-forge pymc3
+conda install numpy scipy mkl
+conda install theano pygpu
 ```
 
 Some of the visualisations use matplotlib and iris:
