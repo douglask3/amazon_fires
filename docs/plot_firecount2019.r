@@ -14,7 +14,7 @@ file_obs = "outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc"
 dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/'
 
 fireMonths = 6:8
-fireMonths = 9
+#fireMonths = 9
 
 qs =seq(0, 1, 0.1)
 
@@ -165,7 +165,7 @@ png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png
 
     mapply(plotMapFun, obs_maps, cols = cols, limits = limits,
            title2 = c("Observations", "", ""),
-           title3 = c(title3, "2019", "No. years exceeded"), xaxt = FALSE)
+           title3 = c(title3, "     Difference in 2019", "No. years exceeded"), xaxt = FALSE)
     
     axis(4)
     axis(4, at = c(-180, 180))
@@ -174,10 +174,10 @@ png(paste0("figs/fireSeasonComaprison", paste(fireMonths, collapse = "-"), ".png
     axis(4) 
     axis(4, at = c(-180, 180))
     par(mar = c(1.5, 0, 1.5, 0))                  
-    StandardLegend(cols_fc, limits_fc, obs_maps[[1]], 0.9, oneSideLabels = FALSE)
+    StandardLegend(cols_fc, limits_fc, obs_maps[[1]], 0.9, oneSideLabels = FALSE, units = '%')
     #mtext('fire counts', side = 1, line = -2.5)
     
-    StandardLegend(dcols_fc, dlimits_fc, obs_maps[[1]], 0.9, extend_min = TRUE, oneSideLabels = FALSE)
+    StandardLegend(dcols_fc, dlimits_fc, obs_maps[[1]], 0.9, extend_min = TRUE, oneSideLabels = FALSE, units = '%')
     #mtext('fire counts', side = 1, line = -3.8, adj = -0.65, xpd = TRUE)
     mtext('Burnt area (%)', side = 1, line = 1.5, adj = -0.85, xpd = TRUE, cex = 0.8)
 
