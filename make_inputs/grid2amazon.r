@@ -15,7 +15,9 @@ regridFiles <- function(dir) {
     files_in  = list.files(dir, full.names = TRUE)
     files_in  = files_in[grepl('.nc', files_in)]
     files_in = files_in[!grepl('quantilePosition_2019_firecount.nc',files_in)]
+    
     files_out = strsplit(files_in, '//', fixed = TRUE)
+    files_out = lapply(files_out, function(i) {i[1] = 'inputs'; i})
     files_out = sapply(files_out, paste0, collapse = "/amazon_region/")
     
     regridFile <- function(file_in, file_out) { 
