@@ -3,19 +3,23 @@ source("libs/make_transparent.r")
 source("libs/plotStandardMap.r")
 library(rasterExtras)
 graphics.off()
-layersr = c(10, 90, 50)
+layersr = c(13, 87, 50)
 layers0 = seq(10, 90)
 cols = c("tan", "#DDDD00", "red")
 cols_years = c("#161843", "#FFFF00", "#a50026")
 cols_moist = rev(c('#ffffd9','#edf8b1','#c7e9b4','#7fcdbb','#41b6c4','#1d91c0','#225ea8','#253494','#081d58'))
 
 dir = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/'
-dir = "outputs/sampled_posterior_ConFire_solutions_squishy/constant_post_2018_full_2002_BG2020_rev_logitnorm/"
+dir = "outputs/sampled_posterior_ConFire_solutions_squishy_full_crop/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT/"
+dir = "outputs/sampled_posterior_ConFire_solutions_squishy_full_crop2/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT_EX/"
+
+rDir = paste0(dir, "/regions3/")
+#dir = "outputs/sampled_posterior_ConFire_solutions_squishy_full_crop/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT_POW2/"
 error_file = paste0(dir, 'fire_summary_precentile.nc')
 
 uncert_file = paste0(dir, 'model_summary.nc')
 
-figName = "figs/logitnorm_test_time_series.png"
+figName = "figs/logitnorm_test_time_series"
  
 obs = "inputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc"
 moistPlot = FALSE
@@ -28,9 +32,9 @@ fire_season = 8:9
 fire_seasons = sapply(fire_season, function(m) mnths[seq(m, max(mnths), by = 12)])
 
 
-temp_file_rs = paste0(c('temp/time_sries_fire_vars-DeepSoil15-rev-lonitnormal-', layersr), collapse = '-') 
+temp_file_rs = paste0(c('temp/time_sries_fire_vars-DeepSoil16-rev-lonitnormal-', layersr), collapse = '-') 
 temp_file = paste0(temp_file_rs, '-rev-logit5-Open.Rd')
-grab_cache = TRUE
+grab_cache = FALSE
 openPost <- function(mnth, file, layer, varname = NULL) {
     print(mnth)
     if (is.null(varname)) dat = brick(file, level = mnth)
@@ -55,9 +59,35 @@ regions = list("A Acre & Southern Amazonas" = -c(71.25, 63.75, 11.25,  6.25),
                "C Maranhão and Piauí" = -c(48.25, 43.25,  8.75,  1.25),
                "D Bolivia" = -c(66.25, 58.75, 18.75, 13.75),   
                "E Paraguay" = -c( 61.25, 53.75, 23.75, 18.75), 
-               "F Area of Active Deforesation" = 'outputs/amazon_region/treeCoverTrendRegions.nc')
+               "F Area of Active Deforesation" = 'inputs/amazon_region/treeCoverTrendRegions.nc')
  
+regions = list("A" = -c(66.25, 58.75, 11.25,  6.25),
+               "B" = -c(56.25, 51.25, 8.75,  3.75),  
+               "C" = -c(48.75, 43.75,  8.75,  1.25),
+               "D" = -c(61.25, 58.75, 18.75, 13.75),   
+               "E" = -c( 61.25, 56.25, 21.25, 18.75),
+               "F Area of Active Deforesation" = 'inputs/amazon_region/treeCoverTrendRegions.nc')
 
+regions = list("A" = -c(76.25, 71.25, 11.26, 6.25),
+               "B" = -c(71.25, 66.25, 11.25, 6.25),
+               "C" = -c(66.25, 61.25, 11.25,  6.25),
+               "D" = -c(61.25, 56.25, 11.25, 3.75),
+               "E" = -c(56.25, 51.25, 8.75,  3.75),  
+               "F" = -c(51.25, 46.25,  8.75,  1.25),
+               "G" = -c(61.25, 58.75, 18.75, 13.75),   
+               "H" = -c( 61.25, 56.25, 21.25, 18.75),
+               "I Area of Active Deforesation"
+                        = 'inputs/amazon_region/treeCoverTrendRegions.nc')
+regions = list("A Acre, Southern Amazonas & Peruvian border " = -c(76.25, 66.25, 11.25, 6.25),
+               "B Rondônia & Northern Mato Grosso" = -c(66.25, 58.75, 11.25,  6.25),               
+               "C Tocantins" = -c(58.75, 51.25, 8.75,  3.75),  
+               "D Maranhão and Piauí" = -c(51.25, 46.25,  8.75,  1.25),
+               "E Brazil/Bolivia/Paraguay Border" = -c(61.25, 56.25, 21.25, 13.75),
+               "F Area of Active Deforesation" = 'inputs/amazon_region/treeCoverTrendRegions-F.nc',
+               "G Humid forest" = 'inputs/amazon_region/treeCoverTrendRegions-G.nc',
+               "H Eastern basin" = 'inputs/amazon_region/treeCoverTrendRegions-H.nc',
+               "I Southern basin decidious forest" = 'inputs/amazon_region/treeCoverTrendRegions-I.nc')
+ 
 #if (file.exists(temp_file) && grab_cache) {
 #    load(temp_file) #
 #} else {
@@ -76,14 +106,16 @@ obs = brick(obs)
 
 cropMean <- function(r, extent, nme1, nme2, ...) {
     tfile = paste0(temp_file_rs, nme1, nme2, 'mean', '.Rd')
-    if (file.exists(tfile)  && grab_cache ) {
+    if (file.exists(tfile)  && F ) {
         load(tfile)
     } else {
         cropMeani <- function(ri) {            
             if (is.character(extent)) {#
                 r0 = ri
-                mask = raster(extent) == 6
-                ri[!mask] = 0
+                
+                mask = raster(extent) == 1
+                #browser()
+                ri[!mask] = NaN
                 
                 #ri = crop(ri, extent( -83.75, -50, -23.3, -10))
                 
@@ -92,39 +124,49 @@ cropMean <- function(r, extent, nme1, nme2, ...) {
             }
            
             ri[ri>9E9] = NaN
-            ri[is.na(ri)] = 0 
-            ri[ri<0] = 0
+            #ri[is.na(ri)] = 0 
+            #ri[ri<0] = 0
             
-            unlist(layer.apply(ri, mean.raster))
+            unlist(layer.apply(ri, mean.raster, na.rm = TRUE))
         }
         r = sapply(r, cropMeani)     
-        save(r, file = tfile)
+        #save(r, file = tfile)
     }
     return(r)
 }
 
-rDir = "outputs/sampled_posterior_ConFire_solutions_squishy_full/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long/regions/"
 rfiles = list.files(rDir)
 polygonCoords <- function(x, y, col, border = col, ...) {
     y = y[1:length(x),]
     polygon(c(x, rev(x)), c(y[,1], rev(y[,2])), col = col, border = border, ...)
 }
 #error = lapply(error, function(i) 1/(1+exp(i*(-1))))
-plotRegion <- function(extent, name) {
+plotRegion <- function(extent, name, legend = F) {
     rID = substr(name, 1, 1)
-    openRegionF <- function(id) {
+    openRegionF <- function(id, tranpose = TRUE) {
         files = paste0(rDir, rfiles[grepl(rID, substr(rfiles, 1, 1))])
         file = files[grepl(id, files, fixed = TRUE)]
-        dat = read.csv(file)
+        dat = read.csv(file) 
+        #if (!is.null(sc)) 
+        
         #print(file)
         #browser()
-        if (!grepl( 'anomolie', id)) dat = dat * 0.4
+        #if (!grepl( 'anomolie', id)) dat = dat * 0.4
         #if (rID != "A" && rID != 'B' && !grepl( 'anomolie', id))
-        return(t(dat[layers,]))
+
+        if (dim(dat)[2] != 1) dat = dat[layers,]
+        return(t(dat))
     }
-    error_r = openRegionF("error.")
+    
+    obs_r = obs_r0 = cropMean(list(obs, obs, obs), extent, name, 'obsMNNNN')
     uncert_r = openRegionF("uncert.")
-    #error_r = uncert_r
+    sc = 1#sum(obs_r[,3])/sum(uncert_r[,3])
+    uncert_r = uncert_r * sc
+    error_r = openRegionF("error.") * sc
+    liki = openRegionF("fire_summary_observed_posterior_position", F)
+    pvalue = openRegionF("fire_summary_p_value", F)
+    
+    #error_r o uncert_r
     #error_r   = cropMean(error, extent, name, 'errorN')
     #uncert_r  = cropMean(uncert, extent, name, 'uncertN')
     #uncert_r0 = cropMean(uncert0, extent, name, 'uncert0') 
@@ -134,15 +176,14 @@ plotRegion <- function(extent, name) {
     #ignitions_r =  cropMean(ignitions, extent, name, 'ignitions')   
     #suppression_r =  cropMean(suppression, extent, name, 'suppression')   
     #moist_r0  = cropMean(moist0, extent, name, 'moist0')
-    obs_r = obs_r0 = cropMean(list(obs, obs, obs), extent, name, 'obsM')
     
     #error_r = error_r[c(228, 1:227),]
     #uncert_r = uncert_r[c(228, 1:227),]
     #moist_r = moist_r
     if (moistPlot) par(mar = c(1.5, 3, 0, 3))   else par(mar = c(1.5, 3, 0, 0)) 
     if (moistPlot)  maxY = max(obs_r) else maxY = max(error_r, uncert_r, obs_r)
-    if (name == 'A') maxY = 0.1
-    
+    #if (name == 'A') maxY = 0.1
+    #dev.new()
     plot(c(12, max(mnths) + 2), c(0, maxY), xaxt = 'n', yaxt = 'n', type = 'n', xaxs = 'i',
          xlab = '', ylab = '')
     if (name == "B") axis(side = 2, at = c(0, 0.02, 0.04, 0.06, 0.08, 0.1))  else axis(side = 2)
@@ -182,7 +223,19 @@ plotRegion <- function(extent, name) {
     } else {
         polygonCoords(mnths, uncert_r, cols[2], lwd = 2)  
     }
-    polygonCoords(mnths, obs_r, cols[3], lwd = 1, lty = 3)  
+    polygonCoords(mnths, obs_r, cols[3], lwd = 1, lty = 3) 
+    lineSeg <- function(i) {
+        x = c(mnths[i-1], mnths[i]) + 0.5
+        y = rep(par("usr")[4]*0.9, 2)
+        if (pvalue[i] == 0 ) return()
+        lwd =  10*(1-pvalue[i])
+        lines(x, y, lwd = lwd) 
+    }  
+    pvalue0 = pvalue 
+    pvalue = 1- pvalue
+    pvalue[liki>0.1] = 1
+    #lapply(2:length(mnths), lineSeg)
+    #browser()
     addGrid(col = make.transparent("black", 0.9)   )
     if (grepl("All Deforested", name)) {
         for (mn in 1:ncol(fire_seasons)) {
@@ -193,7 +246,7 @@ plotRegion <- function(extent, name) {
     #grid(col = make.transparent("black", 0.9), nx = -1 + length(mnths)/12, ny = NULL)
     mtext(name, adj = 0.1, line = -1.5, col = make.transparent("black", 0.5))   
 
-    if (name == tail(names(regions),1)) {
+    if (legend) {#if (name == tail(names(regions),1)) {
          at = seq(1, max(mnths), by = 12)
         axis(1, at = at, labels = 2001 + round(at/12))
     }
@@ -270,7 +323,7 @@ plotRegion <- function(extent, name) {
     } 
     cols_dumb = apply(fire_seasons, 2, dumbell)[,1]
     
-    if (name == tail(names(regions), 1)) {
+    if (legend) {# (name == tail(names(regions), 1)) {
         plot.new()
 legend('topright', c('Full postirior', 'Parameter uncertainty', 'Observations'),
                 text.col = "black", horiz = TRUE, bty = 'n')
@@ -285,7 +338,7 @@ legend('topright', c('Full postirior', 'Parameter uncertainty', 'Observations'),
         text(x = c(2, 10, 19) , y = 0.1, c('2002', '2010', '2019'), xpd = NA, col = "white")
         if (!moistPlot) {
             text(10, 0.5, 'Uncertainty', xpd = NA, col = "white")
-            text(10, c(0.9, 0.1), 'Error', xpd = NA, col = "white") 
+            text(10, 0.9, 'Error', xpd = NA, col = "white") 
         }
     }
         
@@ -295,14 +348,24 @@ legend('topright', c('Full postirior', 'Parameter uncertainty', 'Observations'),
     #return(list(obs_r0, uncert_r0, moist_r0))
 }
 
-png(figName, height = 183 * 7/8 *6.7/5.7, width = 183, res = 300, units = 'mm')
-    layout(t(matrix(c(1:20, 20), nrow = 3)), widths = c(.7, 0.15, 0.15),
-            heights = c(1,1,1,1,1,1, 0.7))
-    par(oma = c(0.67, 1, 2, 2.5))
+plotRegionsSub <- function(id) {
+    np = length(id)
+    heights =  c(rep(1, np), 0.7)
+    height = sum(heights) * 27 + 5
+    layout = t(matrix(c(1:((3*np)+2), 3*np + 2), nrow = 3))
+    png(paste0(c(figName, id, '.png'), collapse = '-') ,
+        height = height, width = 183, res = 300, units = 'mm')
+        layout(layout, widths = c(.7, 0.15, 0.15),
+                heights = heights)
+        par(oma = c(0.67, 1, 2, 2.5))
 
-    outs = mapply(plotRegion, regions, names(regions), SIMPLIFY = FALSE)
+        outs = mapply(plotRegion, regions[id], names(regions)[id], c(rep(F, np-1), T),SIMPLIFY = FALSE)
 
-    mtext.units(outer = TRUE, side = 2, 'Burnt area (%)', line = -1)
-    mtext(outer = TRUE, side = 4, 'Modelled anomaly', line = 1.2)
-    mtext(side = 1, 'Observed anomaly', line = -5.5)
-dev.off()
+        mtext.units(outer = TRUE, side = 2, 'Burnt area (%)', line = -1)
+        mtext(outer = TRUE, side = 4, 'Modelled anomaly', line = 1.2)
+        mtext(side = 1, 'Observed anomaly', line = -5.5)
+    dev.off()
+}
+
+plotRegionsSub(1:5)
+plotRegionsSub(6:9)
