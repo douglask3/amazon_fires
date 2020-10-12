@@ -6,7 +6,7 @@ library(rasterExtras)
 library(ncdf4)
 graphics.off()
 
-files = paste0("outputs/amazon_region/",
+files = paste0("inputs/amazon_region/",
                c("vegetation/treecover-2001-June2018.nc",
                  "human/cropland2001-2019.nc", "human/pasture2001-2019.nc", "human/fract_agr2001-2019.nc"))
                 
@@ -35,7 +35,11 @@ regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
                C = -c(48.25, 43.25,  8.75,  1.25),
                D = -c(66.25, 58.75, 18.75, 13.75),
                E = -c(61.25, 53.75, 23.75, 18.75))
-
+regions = list("A" = -c(76.25, 66.25, 11.25, 6.25),
+               "B" = -c(66.25, 58.75, 11.25,  6.25),               
+               "C" = -c(58.75, 51.25, 8.75,  3.75),  
+               "D" = -c(51.25, 46.25,  8.75,  1.25),
+               "E" = -c(61.25, 56.25, 21.25, 13.75))
 limits_tree = seq(0, 0.9, 0.1) * 100
                      
 scales = c(1/0.8, 1, 1, 1)
@@ -71,7 +75,7 @@ plotVariable <- function(file, title, scale, cols, cols_trend, limits, limits_tr
     plotStandardMap(trend, cols_trend, limits_trend, pValue, TRUE, extend_max = TRUE, extend_min = TRUE)  
     return(addLayer(trend, pValue))
 }
-png("figs/treeCoverTrends.png", height = 200, width = 183, units = 'mm', res = 300)
+png("figs/treeCoverTrends.png", height = 170, width = 183, units = 'mm', res = 300)
     layout(rbind(c(1, 3, 5, 7), c(2, 4, 6, 8), c(9, 10, 10, 10)))
     par(mar = rep(0,4), oma = c(0,2,2,2))
 
@@ -119,17 +123,17 @@ png("figs/treeCoverTrends.png", height = 200, width = 183, units = 'mm', res = 3
             FUN("white", 1.8)
         }
     }
-    mapply(addBox, regions, name = names(regions), lwd = 2)
+    
     #browser() 
     lines(c(-180, 180), c(-23.5, -23.5), lty = 2, lwd = 1.5)
     mtext(side = 2, "Trend based regions")
-    plot.new()
-    legend('left', legend = labs_out, pch = 15, pt.cex = 3, col = cols)
-dev.off()
+    #plot.new()
+    #legend('left', legend = labs_out, pch = 15, pt.cex = 3, col = cols)
+#dev.off()
 
 comment = as.list(1:length(labs_out))
 names(comment) = labs_out
-writeRaster.gitInfo(summ, 'outputs/amazon_region/treeCoverTrendRegions.nc', comment = comment, overwrite = TRUE)
+writeRaster.gitInfo(summ, 'inputs/amazon_region/treeCoverTrendRegions.nc', comment = comment, overwrite = TRUE)
 
 deforestMask = summ
 deforestMask[summ!= 6] = 0
@@ -140,10 +144,96 @@ lat = lat > (-23.5) & lat < 0
 deforestMask[!lat] = 0
 deforestMask[is.na(summ)] = NaN
 
-writeRaster.gitInfo(summ, 'outputs/amazon_region/treeCoverTrendRegions-deforestMask.nc', comment = comment, overwrite = TRUE)
+writeRaster.gitInfo(deforestMask, 'inputs/amazon_region/treeCoverTrendRegions-F.nc', comment = comment, overwrite = TRUE)
 
 
-BA =  brick('outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc')
+deforestMaskG = deforestMaskH = deforestMaskI = deforestMask
+t3 = !is.na(deforestMask[])
+t1 = xFromCell(deforestMask, 1:length(deforestMask)) > -51.25
+t2 = yFromCell(deforestMask, 1:length(deforestMask)) < -11.25
+t4 = yFromCell(deforestMask, 1:length(deforestMask)) > (-11.25+5)
+
+
+t5 = yFromCell(deforestMask, 1:length(deforestMask)) > (-11.25-2.5)
+t6 = xFromCell(deforestMask, 1:length(deforestMask)) < (-51.25-15)
+
+deforestMaskG[t1 & t3] = 0
+deforestMaskG[t2 & t3 & !(t5 & t6)] = 0
+#deforestMaskG[] = 0
+#deforestMaskG[t4 & t3] = 0
+
+deforestMaskH[!t1 & t3] = 0
+deforestMaskI[!t2 & t3] = 0
+deforestMaskI[ t1 & t3] = 0
+deforestMaskI[ t5 & t6] = 0
+writeRaster.gitInfo(deforestMaskG, 'inputs/amazon_region/treeCoverTrendRegions-G.nc', comment = comment, overwrite = TRUE)
+writeRaster.gitInfo(deforestMaskH, 'inputs/amazon_region/treeCoverTrendRegions-H.nc', comment = comment, overwrite = TRUE)
+writeRaster.gitInfo(deforestMaskI, 'inputs/amazon_region/treeCoverTrendRegions-I.nc', comment = comment, overwrite = TRUE)
+
+addPnts <- function(r, pch, ...) {
+    xy = xyFromCell(r, which(r[]==1))
+    points(xy[,1], xy[,2], pch = pch, col = make.transparent("black", 0.5), ...)
+}
+addPnts(deforestMaskG, pch = 19, cex = 0.67)
+addPnts(deforestMaskH, pch = 4)
+addPnts(deforestMaskI, pch = 8)
+mapply(addBox, regions, name = names(regions), lwd = 2)
+dev.off()
+
+png("figs/regionsMap.png", height = 100*0.5, width = 140*0.5, units = 'mm', res = 300) 
+par(mar = c(0, 0, 0, 0))
+out = deforestMask + deforestMaskH + 2*deforestMaskI
+#out[out == 0] = NaN
+cols = c("#F0F0F0", '#1b9e77','#d95f02', '#7570b3')#c("green", "red")
+plotStandardMap(out, ylim = c(-28, 8),
+                cols = cols, limits = 0.5:2.5)
+mapply(addBox, regions, name = names(regions), lwd = 2)
+legend('bottomleft', horiz = TRUE, col = cols[-1], pch = 15, pt.cex = 1, legend = c("G - Humid forest", "H - Cerrado/\nCattinga savanna", "I - Chiquitano/\nGran Chaco dry forest"), x.intersp = 1,cex = 0.5, text.width=13.5, box.col = "white")
+dev.off()
+
+regions = list("A" = -c(71.25, 63.75, 11.25,  6.25),
+               "B" = -c(61.25-2.5, 53.75, 11.25-2.5,  6.25),  
+               "C" = -c(48.25, 43.25,  8.75,  1.25),
+               "D" = -c(66.25, 58.75, 18.75, 13.75),   
+               "E" = -c( 61.25, 53.75, 23.75, 18.75))
+
+regions = list("A" = -c(66.25, 58.75, 11.25,  6.25),
+               "B" = -c(56.25, 51.25, 8.75,  3.75),  
+               "C" = -c(48.75, 43.75,  8.75,  1.25),
+               "D" = -c(61.25, 58.75, 18.75, 13.75),   
+               "E" = -c( 61.25, 56.25, 21.25, 18.75))
+
+regions = list("A" = -c(76.25, 71.25, 11.26, 6.25),
+               "B" = -c(71.25, 66.25, 11.25, 6.25),
+               "C" = -c(66.25, 61.25, 11.25,  6.25),
+               "D" = -c(61.25, 56.25, 11.25, 3.75),
+               "E" = -c(56.25, 51.25, 8.75,  3.75),  
+               "F" = -c(51.25, 46.25,  8.75,  1.25),
+               "G" = -c(61.25, 58.75, 18.75, 13.75),   
+               "H" = -c( 61.25, 56.25, 21.25, 18.75))
+regions = list("A" = -c(76.25, 66.25, 11.25, 6.25),
+               "B" = -c(66.25, 58.75, 11.25,  6.25),               
+               "C" = -c(58.75, 51.25, 8.75,  3.75),  
+               "D" = -c(51.25, 46.25,  8.75,  1.25),
+               "E" = -c(61.25, 56.25, 21.25, 13.75))
+ 
+rmasks = summ
+rmasks[!is.na(rmasks)] = 0
+
+makeMask <- function(name, extent) {
+    X = (extent[1]+0.1):(extent[2]-0.1)
+    Y = rep((extent[3]+0.1):(extent[4]-0.1), each = length(X))
+    rmasks[unique(cellFromXY(rmasks, cbind(X,Y)))] = 1
+    plot(rmasks)
+    browser()
+    writeRaster.gitInfo(rmasks,
+                        paste0('inputs/amazon_region/treeCoverTrendRegions-', name, '.nc'),
+                        comment = comment, overwrite = TRUE)
+}
+
+mapply(makeMask, names(regions), regions)
+
+BA =  brick('inputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc')
 
 fireMonths = 6:8
 months = lapply(fireMonths, seq, nlayers(BA), by = 12)
