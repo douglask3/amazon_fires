@@ -15,9 +15,10 @@ dir_sim  = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/con
 dir_sim  = "outputs/sampled_posterior_ConFire_solutions/constant_post_2018_full_2002_BG2020_rev/"
 dir_sim  = "outputs/sampled_posterior_ConFire_solutions_squishy/constant_post_2018_full_2002_BG2020_rev_logitnorm/"
 
-dir_sim =  "outputs/sampled_posterior_ConFire_solutions_squishy_full_crop2/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT/"#"outputs/sampled_posterior_ConFire_solutions_squishy_full/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT/"
+dir_sim =  "outputs/sampled_posterior_ConFire_solutions_squishy_full_crop2/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT_EX/"#"outputs/sampled_posterior_ConFire_solutions_squishy_full/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT/"
 
-fireMonths = 6:8
+fireMonths = 9#6:8#6:8
+testYr = 18
 
 regions = list("A" = -c(76.25, 71.25, 11.26, 6.25),
                "B" = -c(71.25, 66.25, 11.25, 6.25),
@@ -67,8 +68,8 @@ title3 = paste('Average',
                paste(substr(month.name[range.single(fireMonths)], 1, 3), collapse = ' - '),
                '2002-2019')
 
-mod_summ_file = paste0(dir_sim, '/model_summary.nc')
-mod_varname = 'burnt_area_mode'
+mod_summ_file = paste0(dir_sim, '/fire_summary_precentile.nc')
+mod_varname = 'burnt_area_mean'
 dat = brick(file_obs)
 months = lapply(fireMonths, seq, nlayers(dat), by = 12)
 monthsByYr = lapply(1:min(sapply(months, length)),
@@ -88,7 +89,7 @@ summeryFile <- function(file, meanMonths = TRUE, ...) {
     dat = brick(file, ...)
     
     #dat[dat == 0] = NaN
-    fireSeasonYr_mean <- function(mnths) sum(dat[[mnths]], na.rm = TRUE)
+    fireSeasonYr_mean <- function(mnths) mean(dat[[mnths]], na.rm = TRUE)
     fireSeasonYr      <- function(mnths)    (dat[[mnths]])
     #XandMask          <- function(mnth, X) { r = X(mnth); r[r==0] = NaN; r}
     if (meanMonths)  maps = layer.apply(monthsByYr, fireSeasonYr_mean)
@@ -99,8 +100,8 @@ summeryFile <- function(file, meanMonths = TRUE, ...) {
     return(maps)
 }
 
-qrs <- function(rs)
-    sum(rs[[nlayers(rs)]] > rs[[-nlayers(obs)]])   
+qrs <- function(rs, layer = nlayers(rs))
+    sum(rs[[layer]] > rs[[-layer]])   
 
 mean.listedRasters <- function(rs) {
 
@@ -109,7 +110,7 @@ mean.listedRasters <- function(rs) {
         rm[[1]] = apply(rm[], 1, median)
         return(rm[[1]])
     }
-    return(layer.apply(1:3, medi))
+    return(layer.apply(1:nlayers(rs[[1]]), medi))
     
     r_mean = rs[[1]]
     for (r in rs[-1]) r_mean = r_mean + r
@@ -126,8 +127,8 @@ obs_mean[] = apply(obs[], 1, median)
 Omask = is.na(brick(file_obs)[[1]])
 obs_mean[Omask] = NaN
 obs_last = obs[[nlayers(obs)]]
-
-obs_maps = list(obs_mean*100, (obs_last - obs_mean)*100, qrs(obs0))
+obs_last = obs[[testYr]]
+obs_maps = list(obs_mean*100, (obs_last - obs_mean)*100, qrs(obs0, testYr))
 
 files_sim = list.files(dir_sim, full.names = TRUE)
 files_sim = files_sim[grepl('sample_', files_sim)][1:10]
@@ -139,31 +140,45 @@ if (file.exists(tfile) && F) {
     load(tfile)
 } else {
     
-    simrs = lapply(monthsByYr, function(mns) {
-        openMnPc <- function(mn, pc)
-            brick(mod_summ_file, level = mn, varname = mod_varname)[[pc]]
-        
-        openPc <- function(pc) sum( layer.apply(mns, openMnPc, pc))
-        out = layer.apply(c(5, 50, 95), openPc)
-    })
+    
         #brick(mod_summ_file, varname = "burnt_area", level = mns)[[c(5, 50, 95)]])
     
-    sim_mean = mean.listedRasters(simrs)
-    sim_mean[is.na(obs_mean)] = NaN
-    
-    sim_last = tail(simrs, 1)[[1]]
+    simMaps <- function(mod_varname = 'burnt_area', pc = c(5, 50, 95)) {
 
-    sim_qrs = layer.apply(1:3, function(i)                  
-                sum(layer.apply(simrs, function(r) sim_last[[i]] > r[[i]])))
+        simrs = lapply(monthsByYr, function(mns) {
+            openMnPc <- function(mn, pc)
+                brick(mod_summ_file, level = mn, varname = mod_varname)[[pc]]
+            #print(mod_varname)
+            openPc <- function(pc) mean( layer.apply(mns, openMnPc, pc))
+            out = layer.apply(pc, openPc)
+        })
+        
+        sim_mean = mean.listedRasters(simrs)
+        sim_mean[is.na(obs_mean)] = NaN
     
-    sim_qrs[[1]][is.na(obs[[1]])] = NaN
+        sim_last = simrs[[testYr]]#tail(simrs, 1)[[1]]
+
+        sim_qrs = layer.apply(1:length(pc), function(i)                  
+                    sum(layer.apply(simrs, function(r) sim_last[[i]] > r[[i]])))
+    
+        if (nlayers(sim_qrs) == 1) sim_qrs[is.na(obs[[1]])] = NaN
+            else sim_qrs[[1]][is.na(obs[[1]])] = NaN
 
     #browser()
-    sim_qrs[is.na(sim_mean)] = NaN
+        sim_qrs[is.na(sim_mean)] = NaN
     
-    sim_maps1 = list(sim_mean*100, (sim_last - sim_mean)*100, sim_qrs)
-    likihood = brick('outputs/sampled_posterior_ConFire_solutions_squishy_full_crop/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT/fire_summary_observed_liklihood.nc', varname = 'variable_0')
-    pvals = brick('outputs/sampled_posterior_ConFire_solutions_squishy_full_crop/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT/fire_summary_observed_liklihood.nc', varname = 'variable')
+        sim_maps1 = list(sim_mean*100, (sim_last - sim_mean)*100, sim_qrs)
+        return(sim_maps1)
+    }
+    sim_maps1  = simMaps( 'burnt_area_at_percentile', 50)
+    sim_maps1b = simMaps( "burnt_area_at_percentile", 84)
+    sim_maps1c = simMaps( "burnt_area_at_percentile", 96)
+    sim_maps1b[[2]] = sim_maps1c[[2]]
+    #browser()
+
+    
+    likihood = brick('outputs/sampled_posterior_ConFire_solutions_squishy_full_crop2/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT/fire_summary_observed_liklihood.nc', varname = 'variable_0')
+    pvals = brick('outputs/sampled_posterior_ConFire_solutions_squishy_full_crop2/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT/fire_summary_observed_liklihood.nc', varname = 'variable')
     likihood[likihood>9E9] = NaN
     
     pvals[pvals>9E9] = NaN
@@ -193,8 +208,8 @@ if (file.exists(tfile) && F) {
 cols = list(cols_fc, dcols_fc,  cols_qs)
 limits = list(limits_fc, dlimits_fc, limits_qs-0.5)
 graphics.off()
-png(paste0("figs/fireSeasonComaprison_rev", paste(fireMonths, collapse = "-"), ".png"),
-    height = 200 * 2.33*4.1/(4.67*2.55), width = 183, res = 300, units = 'mm')
+png(paste0("figs/fireSeasonComaprison_rev", paste(fireMonths, collapse = "-"),'-yr-', testYr, ".png"),
+    height = 200 *(5.1/4.1)* 2.33*4.1/(4.67*2.55), width = 183, res = 300, units = 'mm')
 
     #layout(rbind(c(1, 2, 2, 3),
     #             c(4, 5, 5, 6),
@@ -208,16 +223,17 @@ png(paste0("figs/fireSeasonComaprison_rev", paste(fireMonths, collapse = "-"), "
                  c(4, 5, 5, 6),
                  c(7, 8, 8, 9),
                  c(10, 11, 11, 12),
-                 c(0, 13, 13, 0)),       
-                 heights = c(1, 1, 0.55, 1, 0.55), widths = c(1, 0.9, 0.1, 1))
+                 c(13, 14, 14, 15),
+                 c(0, 16, 16, 0)),       
+                 heights = c(1, 1, 1, 0.55, 1, 0.55), widths = c(1, 0.9, 0.1, 1))
                  #c(10, 11, 11, 12),
                  #13,
                  #c(14, 15, 15, 16),
                  #17),
            #heights = c(1, 1, 0.33, 1, 0.33, 1, 0.33), widths = c(1, 0.9, 0.1, 1))
-    mar = c(1, 0, 0, 0)
+    mar = c(0.5, 0, 0, 0)
     par(mar = mar, oma = c(0, 1.2, 1.2, 3))
-    plotMapFun <- function(r, ..., xaxt = TRUE) {
+    plotMapFun <- function(r, ..., xaxt = TRUE, addRegions = FALSE) {
         if (is.null(r)) return()
         
         plotStandardMap(r,..., ylim = c(-23.5, 8))
@@ -225,7 +241,7 @@ png(paste0("figs/fireSeasonComaprison_rev", paste(fireMonths, collapse = "-"), "
             lines(region[c(1, 1, 2, 2, 1)], region[c(3, 4, 4, 3, 3)])
             text(x = mean(region[1:2]), y = mean(region[3:4]), substr(name, 1, 1))
         }
-        mapply(addRegion, regions, names(regions))
+        if (addRegions) mapply(addRegion, regions, names(regions))
         if (xaxt) {
             axis(1)
             axis(1, at = c(-80, 180))
@@ -234,28 +250,35 @@ png(paste0("figs/fireSeasonComaprison_rev", paste(fireMonths, collapse = "-"), "
 
     mapply(plotMapFun, obs_maps, cols = cols, limits = limits,
            title2 = c("Observations", "", ""),
-           title3 = c(title3, "     Difference in 2019", "No. years exceeded"), xaxt = FALSE)
+           title3 = c(title3, paste0("     Difference in ", 2001+testYr), "No. years exceeded"),
+            addRegions = TRUE, xaxt = FALSE)
     
     axis(4)
     axis(4, at = c(-180, 180))
     mapply(plotMapFun, sim_maps1, cols = cols, limits = limits, 
-           title2 = c("Simulated", "", ""))
+           title2 = c("Simulated - 50%", "", ""), xaxt = FALSE)
     axis(4) 
     axis(4, at = c(-180, 180))
-    par(mar = c(3, 0, 1.2, 0))                  
+    
+    mapply(plotMapFun, sim_maps1b, cols = cols, limits = limits, 
+           title2 = c("Simulated - 90%", "", ""))
+    axis(4) 
+    axis(4, at = c(-180, 180))
+    
+    par(mar = c(2.2, 0, 1.7, 0))                  
     StandardLegend(cols_fc, limits_fc, obs_maps[[1]], 0.9, oneSideLabels = FALSE, units = '%')
     #mtext('fire counts', side = 1, line = -2.5)
     
     StandardLegend(dcols_fc, dlimits_fc, obs_maps[[1]], 0.9, extend_min = TRUE, oneSideLabels = FALSE, units = '%')
     #mtext('fire counts', side = 1, line = -3.8, adj = -0.65, xpd = TRUE)
-    mtext('Burnt area (%)', side = 1, line = 1.5, adj = -0.85, xpd = TRUE, cex = 0.8)
+    mtext('Burnt area (%)', side = 1, line = 1.0, adj = -0.85, xpd = TRUE, cex = 0.8)
 
     labelss = limits_qs
     labelss[seq(1, length(labelss), 2)] = ''
     StandardLegend(cols_qs, limits_qs, obs_maps[[3]],
                    labelss = c('0', labelss),
                    adj = 0,extend_max = FALSE)
-    mtext('No. years', side = 1, line = 1.5, adj = 0.65, cex = 0.8)
+    mtext('No. years', side = 1, line = 1.0, adj = 0.65, cex = 0.8)
     par(mar = mar)
     cols = (c('#ffffe5','#fff7bc','#fee391','#fec44f','#fe9929','#ec7014','#cc4c02','#993404','#662506'))
     limits = 1-rev(c(0.05, 0.1, 0.2, 0.5))
@@ -264,7 +287,7 @@ png(paste0("figs/fireSeasonComaprison_rev", paste(fireMonths, collapse = "-"), "
 
     axis(4) 
     axis(4, at = c(-180, 180))
-    par(mar = c(3, 0, 1.2, 0))  
+    par(mar = c(2.5, 0, 1.7, 0))  
     StandardLegend(cols, limits, sim_maps2[[3]],
                    adj = 0,extend_max = TRUE)
     obs_slt = summeryFile(file_obs, FALSE)
