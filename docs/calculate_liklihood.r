@@ -7,7 +7,7 @@ source("libs/Tnorm0.r")
 error_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/fire_summary_precentile.nc' 
 uncert_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/model_summary.nc'    
 
-obs_file = "outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc"    
+obs_file = "inputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc"    
 
 regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
                B = -c(61.25, 53.75, 11.25,  6.25),  
@@ -15,7 +15,16 @@ regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
                D = -c(66.25, 58.75, 18.75, 13.75),   
                E = -c( 61.25, 53.75, 23.75, 18.75), 
                "F All Deforested" = 'outputs/amazon_region/treeCoverTrendRegions.nc')       
-
+regions = list("A" = -c(76.25, 66.25, 11.25, 6.25),
+               "B" = -c(66.25, 58.75, 11.25,  6.25),               
+               "C" = -c(58.75, 51.25, 8.75,  3.75),  
+               "D" = -c(51.25, 46.25,  8.75,  1.25),
+               "E" = -c(61.25, 56.25, 21.25, 13.75),
+               "F" = 'inputs/amazon_region/treeCoverTrendRegions-F.nc',
+               "G" = 'inputs/amazon_region/treeCoverTrendRegions-G.nc',
+               "H" = 'inputs/amazon_region/treeCoverTrendRegions-H.nc',
+               "I" = 'inputs/amazon_region/treeCoverTrendRegions-I.nc')
+ 
 mnth_tested = c(224, 225, 116, 117)
 quantiles_tested = seq(10, 90, 10)
 quantiles_tested = sort(c(quantiles_tested, 42:48, 78:99))
@@ -26,7 +35,7 @@ testMonth <- function(mnth, region, regionName) {
     print(regionName)
     print(mnth)
 
-    temp_file_all = paste0('temp/', 'likiihood_results4_month-', mnth, '-region-', 
+    temp_file_all = paste0('temp/', 'likiihood_resultsX4_month-', mnth, '-region-', 
                        regionName, '.Rd')
     if (file.exists(temp_file_all)) {
         load(temp_file_all)
@@ -39,6 +48,7 @@ testMonth <- function(mnth, region, regionName) {
     cropRegion <- function(rin) {
         if (is.character(region)) {
             out = rin
+            browser()
             out[raster(region)!=6] = NaN
             out = crop(out, extent( -83.75, -50, -23.3, 0)) 
             
@@ -118,9 +128,11 @@ testMonth <- function(mnth, region, regionName) {
     t2 = which_q(1, modva)
     t3 = which_q(obsva, modva)
    
+    modUOverMeanU = modU
+    modUOverMeanU[] = modU[]/modMeanU[]
     out = c(obsv, obsva,
            unlist(layer.apply(modU, meanrasterNA)),
-           unlist(layer.apply(modU/modMeanU[[50]], meanrasterNA)),
+           unlist(layer.apply(modUOverMeanU, meanrasterNA)), #[[50]]
            t1, t2, t3)
     save(out, file = temp_file_all)
     return(out)

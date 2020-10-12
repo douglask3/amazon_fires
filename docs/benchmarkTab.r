@@ -7,13 +7,14 @@ source("libs/make_transparent.r")
 source("libs/srank.raster.r")
 source("libs/modal_approx.r")
 
-obs = 'outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc'
+obs = 'inputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc'
 sim_dir = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/'
+sim_dir = "outputs/sampled_posterior_ConFire_solutions_squishy_full_crop2/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT/"
 
 fireMonths_early = 6:9
 fireMonths_late  = 9
 
-Tfname0 = 'temp/benchmarkingSTuff2'
+Tfname0 = 'temp/benchmarkingSTuff-rev3'
 mask    = NULL
 extent  = NULL
 
@@ -27,8 +28,8 @@ getAllMonths <- function(fireMonths, dat) {
     return(monthsByYr)
 }
 
-brickR <- function(r) {
-    r = brick(r)[[1:216]]
+brickR <- function(r, ...) {
+    r = brick(r, ...)[[1:216]]
     if (!is.null(extent)) r = raster::crop(r, extent)
     
     r[r>9E9] = NaN
@@ -54,6 +55,7 @@ sim_files = sim_files[grepl('sample_no_', sim_files)]#[1:30]
 runTempFile <- function(file, FUN, Tfname, Tfname0, MoreArgs) {
     id = strsplit(strsplit(file, 'sample_')[[1]][2], '.nc')[[1]]
     fname = paste0(Tfname0, Tfname, '-', id, '.Rd')
+    
     if (file.exists(fname)) {
         load(fname)
     } else {
@@ -65,6 +67,7 @@ runTempFile <- function(file, FUN, Tfname, Tfname0, MoreArgs) {
 
 runAllMember <- function(FUN, Tfname, MoreArgs) {
     #out = lapply(sim_files, runTempFile,  FUN, Tfname = Tfname,Tfname0, MoreArgs)
+    #return(out)
     cl = makeSOCKcluster(c("localhost", "localhost", "localhost", "localhost", "localhost"))
         clusterExport(cl=cl,
                       list("brick", "brickR", "NME", "NME.default",
@@ -79,7 +82,7 @@ runAllMember <- function(FUN, Tfname, MoreArgs) {
 
 NME_months <- function(file, mnths, obs) {
     library(raster)
-    sim = brickR(file)
+    sim = brickR(file, varname = "burnt_area_mode")
     if (!is.na(mnths)) sim  = mean(sim[[mnths]])
     
     nme  = NME (obs, sim)
@@ -186,7 +189,7 @@ modal_metric  <- function(file, obs) {
     source("libs/modal_approx.r")
     library(raster)
     print(file)
-    sim = brickR(file)
+    sim = brickR(file, varname = "burnt_area_mode")
     sim[sim > 9E9] = NaN
     sim = layer.apply(1:12, function(i) mean(sim[[seq(i, nlayers(sim), by = 12)]]))
     sim = modal_approx(sim)
@@ -212,7 +215,7 @@ MPDi <- function(file, obs, grid_Area, total_Area) {
     library(raster)
     library(rasterExtras)
     source("libs/PolarConcentrationAndPhase.r")
-    sim = brickR(file)
+    sim = brickR(file, varname = "burnt_area_mode")
     
     sim = PolarConcentrationAndPhase(sim)
 
@@ -236,7 +239,7 @@ srankI <- function(file, obs, grid_Area, total_Area) {
     library(raster)
     library(rasterExtras)
     print(file)
-    sim = brickR(file)
+    sim = brickR(file,varname = "burnt_area_mode")
     comparisons <- function(...) {
         comp = srank.raster(obs, sim, plot = FALSE, ...)
         sum.raster(grid_Area * comp, na.rm = TRUE)/total_Area
@@ -274,8 +277,11 @@ Tfname0 = 'temp/benchmarkingSTuff2-masked'
 mask   = raster('outputs/amazon_region/treeCoverTrendRegions.nc') == 6
 extent = extent( -83.75, -50, -23.3, 0)
 mask   = crop(mask, extent)
+obs0 = obs
 
-obs = brickR(obs)
+obs= raster::crop(obs, extent)
+r[!mask] = NaN
+#obs = brickR(obs)
 
 comp.srank = runAllMember(srankI, 'srankIi', list(obs[[1:216]], grid_Area, total_Area))
 comp.srank.monthly = sapply(comp.srank, function(i) i[[1]])

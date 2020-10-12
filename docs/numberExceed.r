@@ -1,29 +1,33 @@
 library(raster)
 
 sim_dir = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/'
+sim_dir = "outputs/sampled_posterior_ConFire_solutions_squishy_full_crop2/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT_EX/"
+
 global_extent = extent(c(-80, -35, -23.5, 0))
 region = 'outputs/amazon_region/treeCoverTrendRegions.nc'
 
 obs_file = 'burnt_area_MCD64A1.006.nc'
-obs_dir = 'outputs/amazon_region/fire_counts/'
+obs_dir = 'inputs/amazon_region/fire_counts/'
 
 files = list.files(sim_dir)
-files = files[grepl('sample_no_', files)]
+files = files[grepl('sample_no_', files)]#[1:10]
 
 files = files#[1:10]#[round(seq(1, length(files), length.out = 33))]#[sample(1:length(files), 10, replace = FALSE)]
 
 mask = raster(region) != 6
 mask[is.na(mask)] = 1
 mask = crop(mask, global_extent)
-mnths = list(222:224, 225)
+mnths = list((222:224)-9*12-6*12, 225-9*12-6*12)
+#mnths = list((222:224), 225)
 
 totalArea = sum.raster((1-mask)*area(mask), na.rm = TRUE)
 exeedance <- function(mnth) {
     
-    cmnth = lapply(mnth, function(i) seq(i - 12*floor(i/12), i, 12))
+    cmnth = lapply(mnth, function(i) seq(i - 12*floor(i/12), 228, 12))
     cmnth = lapply(1:length(cmnth[[1]]), function(i) sapply(cmnth, function(j) j[i]))
-    sampleMember <- function(file, dir = sim_dir, var = "burnt_area") {        
-        temp_file = paste0('temp/exceedance2019_for_month-', 
+    which_yr = which(sapply(cmnth, function(i) all(i == mnth)))
+    sampleMember <- function(file, dir = sim_dir, var = "burnt_area_mode") {        
+        temp_file = paste0('temp/exceedance2019_for_month-rev4-', 
                            paste0(mnth,collapse = '-'), '-file-', file, '.Rd')
         
         if (file.exists(temp_file)) {
@@ -39,7 +43,7 @@ exeedance <- function(mnth) {
             }
             dat = layer.apply(cmnth, annualAv )    
             
-            final = dat[[nlayers(dat)]]
+            final = dat[[which_yr]]
             final[mask] = NaN
             
             final = sum(final > dat)

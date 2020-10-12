@@ -15,7 +15,11 @@ global_extent = extent(c(-85, -30, -60, 13))
 
 files = c("Burnt area" = "outputs/amazon_region/burnt_area-GFED4s_2.5degree_2001-2016.nc",
           "Fire count" = "outputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc")
-mod_file = NULL# 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeppSoil/model_summary.nc'
+
+files = c("Burnt area" = "inputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc",
+          "Fire count" = "inputs/amazon_region/fire_counts/firecount_TERRA_M__T.nc")
+mod_file =  'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeppSoil/model_summary.nc'
+mod_file = NULL
 
 units = c('%', '10k~m-2~')    
 scale = c(100, NaN)
@@ -25,6 +29,12 @@ regions = list(A = -c(71.25, 63.75, 11.25,  6.25),
                C = -c(48.25, 43.25,  8.75,  1.25),
                D = -c(66.25, 58.75, 18.75, 13.75),   
                E = -c( 61.25, 53.75, 23.75, 18.75))
+regions = list("A" = -c(76.25, 66.25, 11.25, 6.25),
+               "B Acre & Southern Amazonas" = -c(66.25, 58.75, 11.25,  6.25),               
+               "C Northern Mato GrossoSmall" = -c(58.75, 51.25, 8.75,  3.75),  
+               "D Maranhão and Piauí" = -c(51.25, 46.25,  8.75,  1.25),
+               "E Bolivia & Paraguay" = -c(61.25, 56.25, 21.25, 13.75))
+
               
 axisMonth = c(0, 0, 0, 0)
 reds9   = c("#FFFBF7", "#F7EBDE", "#EFDBC6", "#E1CA9E", "#D6AE6B", 
@@ -48,7 +58,7 @@ obs = lapply(files, brick)
 
 
 if (!is.null(mod_file))
-    obs[[2]] = brick(mod_file)[[1:nlayers(obs[[1]])]]
+    obs[[2]] = layer.apply(1:nlayers(obs[[1]]), function(i) brick(mod_file, level = i, varname = "burnt_area_mode")[[50]])#brick(mod_file)[[1:nlayers(obs[[1]])]]
     #obs[[2]] = layer.apply(1:nlayers(obs[[1]]), function(i)brick(mod_file, level = i))#[[50]])
 
 
@@ -87,7 +97,7 @@ ModalMap <- function(obs, txt, addLegend, let, additional) {
     modal_approx = 1 + sum(modal_approx, na.rm = TRUE)/modal[[1]]
 
     plotStandardMap(modal_approx -1, limits = modal_limits -1, cols = modal_cols)
-    addLetLab(let, additional)
+    addLetLab(let, additional, line = 0)
     mtext(txt, side = 2, line = -1)
     if (addLegend) 
         StandardLegend(limits = modal_limits - 1, cols = modal_cols, dat = modal_approx-1,
@@ -130,7 +140,7 @@ png(fname, height = 400, width = 160, res = 300, units = 'mm')
         aa = mean(r) * 12
         plotStandardMap(aa, limits = limits, cols = aa_cols)
         mtext(name, side = 2, line = -1)
-        addLetLab(lab, additional)
+        addLetLab(lab, additional, line = 0)
         StandardLegend(aa, limits = limits, cols = aa_cols, units = units, add = TRUE,
                         oneSideLabels = FALSE)
     }
@@ -146,10 +156,10 @@ png(fname, height = 400, width = 160, res = 300, units = 'mm')
     plotConPhase <- function(pc, let, addLegend = FALSE) {
         plotStandardMap(pc[[1]], limits = 1:12, cols = phase_cols)
         if (addLegend) additional = c('Phase', 'Concentration') else additional = c('', '')
-        addLetLab(let[1], additional[1])
+        addLetLab(let[1], additional[1], line = 0)
         if (addLegend) SeasonLegend(0.5:11.5, cols = phase_cols, add = FALSE)
         plotStandardMap(pc[[2]], limits = seq(0, 1, 0.1), cols = conc_cols)
-        addLetLab(let[2], additional[2])
+        addLetLab(let[2], additional[2], line = 0)
         if (addLegend) StandardLegend(limits = seq(0, 0.9, 0.1), cols = conc_cols, extend_max = FALSE,
                                       maxLab = 1, dat = pc[[2]], add = TRUE, oneSideLabels = FALSE) 
     }
@@ -197,12 +207,12 @@ png(fname, height = 400, width = 160, res = 300, units = 'mm')
 dev.off()
 }
 
-runAll("GFED4s_vs_INPE_FC")
+#runAll("GFED4s_vs_INPE_FC")
 
-files[1] = "outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc"
-runAll("Modis_vs_INPE_FC")
+files[1] = "inputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc"
+#runAll("Modis_vs_INPE_FC")
 
-runAll("Modis_vs_INPE_FC_2019", Layers = c(217:227, 227))
+#runAll("Modis_vs_INPE_FC_2019", Layers = c(217:227, 227))
 
 files = c("Burnt area (GFED4s)" = "outputs/amazon_region/burnt_area-GFED4s_2.5degree_2001-2016.nc",
           "Burnt area (MCD64A1)" = "outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc")
@@ -213,14 +223,14 @@ scale = c(100, 100)
 #runAll("GFED4s_vs_Modis")
 
 files = c("Burnt area -MCD64A1" = 
-            "outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc",
+            "inputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc",
           "Burnt area -Model" =
-            "outputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc")
+            "inputs/amazon_region/fire_counts/burnt_area_MCD64A1.006.nc")
 
 
 mod_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/model_summary.nc'
-
-mod_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/sample_no_7560.nc'
-#runAll("MODIS_vs_Model")
+mod_file = "outputs/sampled_posterior_ConFire_solutions_squishy_full_crop2/constant_post_2018_full_2002_BG2020_rev_logitnorm_Long_PT_EX/model_summary.nc"
+#mod_file = 'outputs/sampled_posterior_ConFire_solutions-burnt_area_MCD-Tnorm/constant_post_2018_full_2002-attempt2-NewMoist-DeepSoil/sample_no_7560.nc'
+runAll("MODIS_vs_Model")
 
 runAll("MODIS_vs_Model_2019", Layers = 217:228)
