@@ -22,7 +22,7 @@ srank.raster <- function(r1, r2 = NULL, lab = '', name = '',season = NULL, plot 
 
     plotStandardMap(out, limits = limits_rank, cols = cols_rank)
     #mtext(name, side = 2, line = -2)
-    addLetLab(lab, name)
+    addLetLab(lab, name, line = 0)
     StandardLegend(out, limits = limits_rank, cols = cols_rank,
                    extend_max = FALSE, maxLab = 1, add = TRUE, oneSideLabels = FALSE)
     return(out)
