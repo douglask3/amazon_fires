@@ -28,7 +28,10 @@ lineBox <- function(x, y, ...)
 plotStandardMap <- function(r, cols, limits, e = NULL, add_legend = FALSE,
                             limits_error = c(0.5, 0.500000001),
                             title2 = '', title3 = '', xlim = c(-85, -36), ylim = c(-56, 10),...) {
-     
+    if (nlayers(r) == 2) {
+        e = r[[2]]
+        r = r[[1]]
+    }
     if (nlayers(r) > 1 && is.null(e)) {
         if (nlayers(r) == 3) {
             if (any(r[] <0, na.rm = TRUE) && any(r[] > 0, na.rm = TRUE)) {
