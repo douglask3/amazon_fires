@@ -10,7 +10,7 @@ As with all github stuff, you probably would like to clone this to locally. If y
 git clone https://github.com/douglask3/fireMIPbenchmarking.git
 cd fireMIPbenchmarking
 git fetch 
-git checkout origin/EGU2020
+git checkout origin/biogeosciences_submission 
 ```
 
 ### Installing stuff
